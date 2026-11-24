@@ -62,5 +62,16 @@
       "hf_check": "0 error / 7 warning (subcomposition + film_silent, deferred to phase 2)",
       "static_frames": "7 snapshots, all non-zero bytes, contact-sheet verified"
     }
+  },
+  "qa_report": {
+    "path": "docs/QA-一期终检报告.md",
+    "source": "out/qa/cineforge-demo-01.qa.md",
+    "reviewer": "clean-context independent subagent",
+    "verdict": "rework (internal conditional archive only)",
+    "rules_pass": 7,
+    "rules_fail": 14,
+    "rules_na": 6,
+    "publish_allowed": false,
+    "not_for_publish": true
   }
 }

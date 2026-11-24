@@ -77,3 +77,26 @@
 - **只借鉴、不捆绑**：MotionHarness「可编辑参数工程 + 时间/区域批注 + checkpoint/版本」设计。
 
 任何新上游**必须先登记 `upstream/catalog.json` 再引入**，并记录精确 SHA 与 License。
+## 独立终检结论（0.2.0，2026-11-24）
+
+完整报告：[docs/QA-一期终检报告.md](docs/QA-一期终检报告.md)（干净上下文独立 subagent，27 条判例逐条判定）。
+
+- **总判：打回**。27 条中 ✓7 / ✗14 / N/A6；14 条 ✗ 无一写入「有意识违反 + 原因」，按规范全部计缺陷。
+- **P0 阻断发布**：`publish.ai_disclosure` 显式 + 隐式双标识均 `false`；BGM/字体授权、无极限词自检、封面/标题/描述/标签全空。结论：**这支片子只能内部看，不能发 B 站/抖音**。
+- **P1**：全片 0 音轨（`film_silent`，带/无 BGM 两版仅渲 1 版）；两个核心卖点「124 张镜头配方卡」「分镜确认门」只以文字宣称、无功能镜头；收尾标 `peak` 实为最弱 `fade`、无发布会合影；能量曲线 `opening(low)→function(mid-high)→breath(low)→outro(peak)` 未落地（s02/s03 连续 mid-high 无呼吸位）；5 条 grid 全为 `ease:"none"` 匀速、末帧静止 **0f**（R2 要求 ≥15f settle）。
+- **达标项**：R1 两处品牌字标 hold 71f / 63f（≥30f）；抖音安全区 `pb=730px≥384`、`pr=324px≥162`；代码级确定性（无 `Date.now`/`Math.random`/运行时数据请求、恰好一个 `paused` timeline 注册 `window.__timelines["main"]`）；工程验收 `0 error / 7 warning / 7 帧非零`、对比度 25/25；数据安全通过（全虚构占位文案）。
+- **如实定性**：这是「一期品味层 / 模板可用性」的占位式样片（纸墨琥珀 + 字卡 + 网格，5 镜同模板），不是成片。离 Opus 级设计感差的是**内容证据与设计层级**（真实产品截图、复杂光影片段、出版级排版、镜头语言），不是差一点调色。`check 0 error` 只证明契约合规，不证明好看。
+- **NOT FOR PUBLISH**：任何面向 douyin 的提交、预览或分发都不在放行范围内；仅可作内部管线验收基线归档。
+
+### 终检发现的工程 / 契约缺陷（已登记，未在本版修改源码）
+
+| 缺陷 | 证据 | 去向 |
+|---|---|---|
+| 分镜 `15s / 450f` → manifest `15.6s / 468f`、s05 `60f→78f` 未写入项目说明 | `examples/demo-project.json` vs `out/cineforge-demo-01/manifest.json` | 一期补齐：单一事实源对齐或显式记录偏离 |
+| `transition_in` 与 `primitive` 口径漂移 3 处：s01 `fade` vs `crash-zoom`、s04 `fade` vs `slide-up`、s05 `hidden-cut` vs `fade` | 同上 | 一期补齐 |
+| brief「Opus 级」vs s02「导演级」措辞不一致 | `examples/demo-project.json` | 一期补齐：文案统一 |
+| Q11 竖屏字高口径矛盾：判例绝对值 ≥56px 与相对值 ≥5.2% 帧高（1920→100px）不可同时成立 | `knowledge/aesthetic-rules.json` Q11 | 一期补齐：`platform-presets.json` 补 9:16 字高档位 |
+| 制作元数据（`card_id · primitive`、分镜 `action` 原文）烧进画面 | `out/cineforge-demo-01/index.html` | 一期补齐：可见文本只渲染 caption |
+| GSAP 3.15.0 走 CDN 未 vendor；`hyperframes.json` registry 指向 `main` 未钉 commit；`window.__timelines` 无 `|| {}` 兜底；`deterministic_seed_required:true` 但产物无 seed 字段 | `index.html` L7 / `hyperframes.json` L3 / L131 | 二期：可复现性加固 |
+| 5 镜同版式、子组合建议 warning ×5 + `timeline_track_too_dense` ×1 | `verify.json` warnings | 二期：父 index.html + `data-composition-src` 子组合 |
+| 外发整包前需脱敏 `video-state.json` / check 报告中的本机绝对路径与 `.local/state/gh/device-id` | `out/` 工程产物 | 交付前清理清单 |
