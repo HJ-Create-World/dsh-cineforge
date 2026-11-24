@@ -5,46 +5,49 @@
 
 GitHub：[HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-cineforge) · 上游：[video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft)（Apache-2.0）
 
-## 当前状态：runtime 0.2.0（已接线，可跑通到 MP4）
+## 当前状态：runtime 0.3.0（返工版 · 已接线 · 已装进本机 DSH）
 
-> 设计阶段（0.1.0-design）已于 2026-11-24 经用户批准收尾；本版是**运行时接线版**。
+> 设计阶段（0.1.0-design）2026-11-24 经用户批准；0.2.0 完成运行时接线；**0.3.0 按独立终检【打回】做了一期返工**（音轨 + 两个功能镜头 + 发布合规 + 14 条工程缺陷）。0.2.0 终检报告作为历史归档保留，见文末。
 
 | 能力 | 落地 | 实测结果 |
 |---|---|---|
-| 技能注册 | `lib/index.js` + `lib/skill-loader.js`：3 个技能经 `ctx.skills.register` 注册，`resourceBase` 指向插件根 | `scripts/self-test.mjs` 60/60；隔离安装 `npm pack` → `npm install` → 真实 import 27/27 |
-| 分镜编译 | `scripts/compile-hf.mjs` 把 `cineforge/storyboard/v1` 编译成 HyperFrames standalone 组合（6 文件） | `hyperframes@0.9.88 check` 0 error（7 warning 均属二期子组合 / 示例无音轨） |
-| 静帧验收 | `scripts/verify-hf.mjs`：check 报告解析 + 最多 6 个时间点 snapshot + contact-sheet 拼图 | 7 帧 png 全非零字节，`ok=true` |
-| 成片渲染 | `npx --yes hyperframes@0.9.88 render` | `examples/demo-project.json` → `renders/cineforge-demo-01.mp4`；ffprobe：H.264 / 1080×1920 / 30fps / 468 帧 / 15.6s / 5.0MB |
-| 离线自检 | `scripts/self-test.mjs`（零 CLI、零网络） | 60/60，含两次编译逐字节 sha256 相同（确定性渲染） |
-| 本机接线 | `scripts/install-local.mjs`：status / install / uninstall / verify，幂等、可回滚、默认 dry-run | 隔离 profile 上 install → 幂等 → uninstall 全通过，备份齐全 |
+| 技能注册 | `lib/index.js` + `lib/skill-loader.js`：3 技能经 `ctx.skills.register` 注册，`resourceBase` 指向插件根 | `scripts/self-test.mjs` **86/86**；隔离 `npm pack` → install → 真实 import 27/27；**已装进 live `desktop` profile 并 27/27 复核** |
+| 分镜编译 | `scripts/compile-hf.mjs`：`cineforge/storyboard/v1` → HyperFrames standalone（8 文件 + 本地 GSAP / 音频资产） | `hyperframes@0.9.88 check`：**0 error / 0 warning**（layout / motion / contrast / craft / audio 全组归零）；仅 7 条结构 lint warning 属二期子组合 |
+| 静帧验收 | `scripts/verify-hf.mjs`：check + 最多 6 时间点 snapshot + contact-sheet | 7 帧 png 全非零、`ok=true`、`empty_frames=0`；二次独立终检【有条件通过】（仅内部归档口径），见下 |
+| 成片渲染 | `hyperframes@0.9.88 render` | `examples/demo-project.json` → `renders/cineforge-demo-01.mp4`；ffprobe：H.264 / 1080×1920 / 30fps / **600 帧 / 20.0s / 3.0MB** + **AAC 48kHz 立体声**；`hyperframes audio --json`：−19.4 LUFS / −1.2 dBTP / 0 clipping（已测量、未试听） |
+| 离线自检 | `scripts/self-test.mjs`（零 CLI、零网络） | 86/86，含两次编译 10 个产物逐字节 sha256 相同 |
+| 本机接线 | `scripts/install-local.mjs`：status / install / uninstall / verify，幂等、可回滚、默认 dry-run | 隔离 profile install→幂等→uninstall 全通过；live profile 已安装且技能注册 27/27 |
 
-**尚未执行的一步**：把插件装进正在运行的 `desktop` profile（`node scripts/install-local.mjs install --apply` 后重载 profile / 重启 DSH）。这一步会触发 `patchReload: live`、可能打断当前 GUI 会话，故未擅自执行；一键安装与一键回滚脚本都已备好（见「安装到 DSH」）。
+**GUI**：本版是**对话内技能**，无图形界面（独立视频创作工作台排二期）。插件无 `dsh.client` / `./client` 导出。
+
+**发布到 dshmarket**：上架材料已备好（`store/` 草稿 YAML、`docs/PUBLISH-商店上架指南.md`、`README.en.md`、`assets/plugin-icon.png`、GitHub topics 已加）。**尚未提 PR** —— 仓库需满 1 天（2026-11-25 16:32 +08:00 后）并由用户手工向 `awesome-dsh-plugin` 提，这是用户之后的动作。想立即在 dshmarket 看到卡片，可在市场设置里加一个本地私有 catalog（见上架指南）。
 
 ## 快速开始（运行时）
 
 ```bash
 # 0. 离线自检（零依赖，秒级）
-npm test                         # scripts/self-test.mjs：60/60
+npm test                         # scripts/self-test.mjs：86/86
 
-# 1. 分镜源：examples/demo-project.json（cineforge/storyboard/v1，抖音 9:16，5 镜）
+# 1. 分镜源：examples/demo-project.json（cineforge/storyboard/v1，抖音 9:16，6 镜 20s）
 #    真实使用由 cineforge-director 技能在对话中产出，并须经过分镜确认门
 
-# 2. 编译成 HyperFrames 工程（零依赖 ESM，输出 6 个文件到 out/<id>/）
+# 2. 编译成 HyperFrames 工程（零依赖 ESM，输出 8 文件 + assets/ 到 out/<id>/）
 node scripts/compile-hf.mjs --project examples/demo-project.json --out out/cineforge-demo-01
 
 # 3. 静帧验收（check + snapshot + 拼图，自动出 JSON 报告）
 node scripts/verify-hf.mjs --out out/cineforge-demo-01
 #    → out/qa/cineforge-demo-01.verify.json（ok=true）
 
-# 4. 渲染 MP4（只在用户确认后执行；本机实测约 4 分 22 秒 / 468 帧）
+# 4. 渲染 MP4（只在用户确认后执行；本机实测约 4 分 23 秒 / 600 帧）
 cd out/cineforge-demo-01
 npx --yes hyperframes@0.9.88 render --output renders/cineforge-demo-01.mp4 --quality draft --fps 30 --workers 2
 
-# 5. 核对成片参数
-ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height,r_frame_rate,nb_frames,duration -of json renders/cineforge-demo-01.mp4
+# 5. 核对成片与音轨
+ffprobe -v error -show_entries stream=codec_name,width,height,r_frame_rate,nb_frames -of json renders/cineforge-demo-01.mp4
+npx --yes hyperframes@0.9.88 audio renders/cineforge-demo-01.mp4 --json
 ```
 
-编译器的确定性保证：禁 `Date.now()` / `Math.random()`、固定种子、每镜只讲一个主动效、末镜自动补 0.6s 收尾留白（上游审美准则 R1/R2），并自动按平台安全区布局（抖音底部 20% + 右侧 15% UI 留白）。
+编译器的确定性保证：禁 `Date.now()` / `Math.random()`、固定种子 `20261124`、每镜只讲一个主动效、**SHOTS 单一事实源**（分镜显式 `primitive` 权威，编译器不再静默覆盖）、分镜声明时长与 manifest 恒等（20s / 600f，不再静默补 0.6s）、GSAP 本地 vendor 去 CDN、registry 钉 commit、`window.__timelines` 兜底、首帧非空；竖屏安全区按 px 布局（抖音 / Reels / Shorts 三平台交集 left≥120 / right≤780 / top≥288 / bottom≤1248）。音频为 BGM + 6 条钉帧 SFX，全部来自上游已核验免署名素材并复制 `ATTRIBUTION.md` 逐条署名。
 
 ## 安装到 DSH
 
@@ -71,7 +74,10 @@ node scripts/install-local.mjs uninstall --apply    # 一键回滚
 | `docs/RESEARCH-生态调研.md` | **调研定稿**：插件市场（无同名插件）、HyperFrames 定位、MotionHarness 判定、动效生态分期、B站/抖音发布合规 |
 | `package.json` / `cordis.patch.yml` | DSH 插件清单与组合包补丁（`dsh.bundle.patch`） |
 | `lib/index.js` / `lib/skill-loader.js` | 插件入口：3 技能注册 + `cineforge_health` 工具 + 卸载清理 |
-| `lib/hf-primitives.mjs` | 7 个确定性 GSAP 动效原语 + 10 类镜头映射 + 6 预设缓动 |
+| `lib/hf-primitives.mjs` | 7 个确定性 GSAP 动效原语 + 10 类镜头映射 + 6 预设缓动（v0.3：显式 primitive 权威） |
+| `lib/hf-layouts.mjs` | 6 种镜头版式（title / quote / card-grid / checklist / metric / outro） |
+| `lib/vendor/gsap.min.js` | 本地 GSAP 3.15.0（去 CDN 外链，产物按相对路径引用） |
+| `assets/audio/` | 已核验免署名 BGM（裁 20s）+ 6 个 Mixkit SFX + 两份 `ATTRIBUTION.md` |
 | `lib/hf-template.html` / `.css` / `hf-shot.html` / `hf-timeline.js` | HyperFrames standalone 组合模板（占位符替换） |
 | `scripts/compile-hf.mjs` | 分镜 JSON → HyperFrames 工程编译器 |
 | `scripts/verify-hf.mjs` | 静帧验收：check 报告 + snapshot + contact-sheet + JSON 报告 |
@@ -79,7 +85,7 @@ node scripts/install-local.mjs uninstall --apply    # 一键回滚
 | `scripts/install-local.mjs` | 本机接线：幂等安装 / 状态 / 校验 / 回滚 |
 | `scripts/fetch-upstream.mjs` | 按 catalog 精确拉取上游快照（API 取 SHA → codeload tar.gz） |
 | `scripts/build-card-index.mjs` | 从上游配方卡重建品味索引（幂等、可重跑） |
-| `examples/demo-project.json` | 端到端示例分镜（抖音 9:16，15s，5 镜） |
+| `examples/demo-project.json` | 端到端示例分镜（抖音 9:16，20s，6 镜，BGM + 6 SFX） |
 | `skills/cineforge-director/` | **导演技能**：idea → 分镜确认 → 成片的状态机与阶段约束 |
 | `skills/cineforge-cards/` | **镜头卡技能**：124 张配方卡的检索与三读协议 |
 | `skills/cineforge-qa/` | **终检技能**：干净上下文独立 subagent，27 条判例逐条核对 |
@@ -96,14 +102,14 @@ node scripts/install-local.mjs uninstall --apply    # 一键回滚
 ## 规格
 
 - **类型**：DSH 插件（npm 包 + `cordis.patch.yml` + `ctx.skills.register`），非独立应用
-- **版本 / 状态**：0.2.0 / runtime（已接线、可跑通到 MP4）
+- **版本 / 状态**：0.3.0 / runtime（返工版，已接线、已装进本机 DSH，可跑通到带声 MP4）
 - **主渲染后端**：HyperFrames（DSH 内置 `dsh-hyperframes` 0.14.1；CLI 钉 `hyperframes@0.9.88`），运行时依赖，不 vendor
 - **次渲染后端**：Remotion（自定 License，仅用于复刻上游调校过的 TSX 镜头，**本插件不分发**）
 - **上游**：[video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft)，Apache-2.0，作者 Wei Yihao，锁定 SHA `59f3e9b9e936ff2bce0e18446226d770a3f2f61f`
 - **上游存档位置**：`03_Video/01_Github/02_video-shotcraft`（保持原始结构，未重构，保留 LICENSE）
 - **知识规模**：124 张镜头配方卡 / 150 个动效 style / 10 个类别
 - **流水线**：11 阶段，唯一硬确认节点在「分镜放行」
-- **成片规格**：默认 1920×1080 @ 30fps；竖屏平台 1080×1920；确定性渲染（固定种子）
+- **成片规格**：默认 1920×1080 @ 30fps；竖屏平台 1080×1920；确定性渲染（固定种子 20261124）+ BGM/SFX 音轨（AAC 48kHz 立体声）
 - **分镜契约**：`cineforge/storyboard/v1`，SHOTS 为唯一事实源
 
 ## 重跑与重建索引
@@ -159,7 +165,23 @@ node -e "const j=require('./knowledge/shot-cards.json');console.log(j.card_count
 普通模型做视频翻车，通常不是不会写代码，而是没有导演判断：方向没定就开渲、动效堆满每一帧、开场多主角群舞、品牌字标一闪而过。上游 video-shotcraft 把这些判断沉淀成了 124 张配方卡和一套判例式审美准则。CineForge 把这份「品味」抽出来，做成与渲染引擎无关的知识层，再套上一层带确认节点的导演状态机，最后落到 HyperFrames 上执行。
 
 详见 [设计总纲](docs/design/2026-11-24-cineforge-design.md)。
-## 独立终检结论（0.2.0，2026-11-24）
+## 二次独立终检结论（0.3.0，2026-11-25 · 当前口径）
+
+完整报告：[docs/QA-一期返工终检报告.md](docs/QA-一期返工终检报告.md)（干净上下文独立 subagent，8 份材料亲自 read / read_image，含全分辨率复核小字）。
+
+- **总判：【有条件通过】—— 仅限「一期内部归档 / 模板可用性验收」口径；按「可发布成片」口径仍为【打回】。** 这不是「终检通过」，不要这样对外表述。
+- 27 条判例 **✓14 / ✗8 / N/A5**（0.2.0 基线 ✓7 / ✗14 / N/A6）；✗ = Q1 / Q5 / Q8 / Q10 / Q11 / S4 / S5 / C2。旧 14 条 ✗：已修复 1 / 部分修复 11 / 未修复 2（Q5 开场多主角、Q8 收尾非合影峰值）。
+- **P0 阻断发布仍成立**：`publish.ai_disclosure` 显式 + 隐式仍 `false`，标题 / 描述 / 封面 / 标签全空，`manifest.publish_allowed:false` → **NOT FOR PUBLISH 保持**。新增的 `<meta name="aigc">` 与 `aigc-metadata.json` 只是载体，三个开关未置真，不能算合规完成。
+- 确实修好的（报告点名肯定）：6 镜 20s / 6 种互异版式与 6 个互异 primitive、3 个功能镜头（124 配方卡 / 分镜确认门 / 150 预览）、BGM + 6 SFX、GSAP 本地化去 CDN、registry 钉 commit、`__timelines` 兜底、首帧非空、安全区 px 化、SHOTS 单一事实源、时长恒等（20s / 600f / `padding_seconds:0`）、制作元数据出画、末镜静止 51f、`film_silent` 已消失。
+- **如实定性**：仍是字卡模板片（6 镜共用同一渐变底 + 网格 + eyebrow + 进度条 + 同一条 0.62s 入场，只换了 6 个内容模块）；无真实产品截图、无复杂光影、无出版级排版、无运镜 / 3D / 镜头语言。`check 0 error` 只证明模板渲染没坏，不证明好看——差距是**内容证据与设计层级**，需整镜重做而非微调参数。
+- 音频「**已测量，未试听**」：−19.4 LUFS（比社交片 −16 到 −14 LUFS 偏安静）/ −1.2 dBTP / 0 clipping；带 / 无 BGM 两版只渲了 1 版；`S5` 音轨偏移未实测；`S4` 的 `impact-cine 4.063s` 越过 s01 3s 边界拖进 s02；`Q11` 的 `mini-card .meta` 29.6px 低于 32px 且逐字折行。
+- 数据安全：画面层 / `index.html` / `manifest.json` 干净；`out/` 工程产物含本机绝对路径（verify 11 处 / video-state 84 处 / check 7 处），但 `out/` 已被 `.gitignore` 忽略、**不入库不外发**；只有手工整包外发时才需脱敏。
+- 整改顺序（登记为二期，不掩盖）：P0 发布合规 → P1 音频试听 / 两版 / S5 偏移 / S4 等长裁切 → P1 收尾合影与开场单主体 → P2 功能镜头出版级排版与字高 → P2 脱敏与证据一致性 → P3 子组合与文案。
+- 放行条件（报告 §10）：标注 `NOT FOR PUBLISH / 一期模板样片`、保持 `publish_allowed:false`、7 条 lint warning 书面豁免、P1/P2 登记二期、**冻结当前静帧与 contact-sheet 作基线** —— 因此本轮不再改成片代码，避免破坏已冻结的基线。
+
+## 独立终检结论（0.2.0，2026-11-24 · 历史归档）
+
+> 以下是对旧 5 镜 15s 静音片的判定。0.3.0 返工已针对下列缺陷逐项整改；返工后的二次独立终检见 [docs/QA-一期返工终检报告.md](docs/QA-一期返工终检报告.md)。
 
 完整报告：[docs/QA-一期终检报告.md](docs/QA-一期终检报告.md)（干净上下文独立 subagent，27 条判例逐条判定）。
 

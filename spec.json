@@ -1,7 +1,7 @@
 {
   "name": "CineForge",
   "cn_name": "影铸 · AI 视频导演台",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "dsh-plugin",
   "status": "runtime",
   "repository": "https://github.com/HJ-Create-World/dsh-cineforge",
@@ -45,6 +45,12 @@
     "installer": "scripts/install-local.mjs",
     "hyperframes_cli": "0.9.88",
     "deterministic": true,
+    "seed": 20261124,
+    "primitive_policy": "shot.primitive is authoritative (SHOTS single source); transition_in/category are fallback only",
+    "layouts": 6,
+    "gsap_vendor": "lib/vendor/gsap.min.js (gsap 3.15.0, local, no CDN)",
+    "registry_pin": "45846f1e6d5609462d29652315d0d4254fe92c24",
+    "installed_profile": "desktop (live, 27/27 verified)",
     "demo_render": {
       "source": "examples/demo-project.json",
       "output": "out/cineforge-demo-01/renders/cineforge-demo-01.mp4",
@@ -52,15 +58,18 @@
       "width": 1080,
       "height": 1920,
       "fps": 30,
-      "frames": 468,
-      "duration_s": 15.6,
-      "bytes": 5241170
+      "frames": 600,
+      "duration_s": 20,
+      "bytes": 3124733,
+      "audio": "aac / 48000 Hz / stereo",
+      "audio_measurement": "lufsIntegrated -19.4 / truePeakDb -1.2 / clipping 0 (measured, not listened)"
     },
     "verification": {
-      "self_test": "60/60",
-      "install_verify": "27/27",
-      "hf_check": "0 error / 7 warning (subcomposition + film_silent, deferred to phase 2)",
-      "static_frames": "7 snapshots, all non-zero bytes, contact-sheet verified"
+      "self_test": "86/86",
+      "install_verify": "27/27 (isolated npm pack install + live desktop profile)",
+      "hf_check": "0 error / 0 warning in layout, motion, contrast, craft, audio; 7 structure lint warnings (subcomposition, phase 2)",
+      "static_frames": "7 snapshots, all non-zero bytes, contact-sheet reviewed by eye",
+      "film_render": "600/600 frames, hasAudio true, 4m 23.3s"
     }
   },
   "qa_report": {
@@ -72,6 +81,42 @@
     "rules_fail": 14,
     "rules_na": 6,
     "publish_allowed": false,
-    "not_for_publish": true
-  }
+    "not_for_publish": true,
+    "note": "historical archive of the 0.2.0 five-shot silent demo film; kept verbatim, do not rewrite"
+  },
+  "qa_rework_report": {
+    "path": "docs/QA-一期返工终检报告.md",
+    "reviewer": "clean-context independent subagent (qa-v03)",
+    "basis": "docs/QA-一期终检报告.md (0.2.0 rework verdict, unchanged archive)",
+    "rules_pass": 14,
+    "rules_fail": 8,
+    "rules_na": 5,
+    "failing_rules": [
+      "Q1",
+      "Q5",
+      "Q8",
+      "Q10",
+      "Q11",
+      "S4",
+      "S5",
+      "C2"
+    ],
+    "old_defects_fixed": 1,
+    "old_defects_partial": 11,
+    "old_defects_unfixed": 2,
+    "verdict": "conditional pass (internal phase-1 template-viability archive only); rework if judged as a publishable film",
+    "publish_allowed": false,
+    "not_for_publish": true,
+    "note": "27 rules re-checked against 8 materials read in a clean context; publish.ai_disclosure explicit and implicit both false, title/description/cover/tags empty; audio measured not listened, with/without BGM two versions not rendered; out/ artifacts contain local absolute paths but are gitignored and never pushed."
+  },
+  "rework_known_defects": [
+    "P0: AI dual labels still false, title/description/cover/tags empty, no legal-word self-check; keep publish_allowed=false",
+    "P1: audio not listened, two BGM versions not rendered, S5 AAC priming offset not measured",
+    "P1: impact-cine 4.063s crosses s01 3s boundary into s02; no per-item foley",
+    "P1: outro is not a group-photo peak; opening is not a single subject (Q8/Q5 still failing)",
+    "P2: mini-card .meta 29.6px below the 32px floor and wraps mid-word; functional shots lack publication-grade layout",
+    "P2: 9:16 font-size thresholds conflict; 8 failing rules have no conscious-violation record",
+    "P2: out/ artifacts carry local absolute paths (verify 11, video-state 84, check 7); out/ is gitignored, sanitize only if exporting the whole folder",
+    "P3: 7 lint warnings (subcomposition, phase 2), abstract slogan, no narration/hard subtitles"
+  ]
 }

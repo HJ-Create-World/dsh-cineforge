@@ -187,7 +187,7 @@ function main() {
     frames,
     empty_frames: emptyFrames,
     contact_sheet: contactSheet || null,
-    note: "warning 为建议性提示（如 timeline_track_too_dense / nested_structure_needs_subcomposition 属二期子组合改造、film_silent 因示例无音轨），不拦截一期验收；error 与空静帧才判失败。"
+    note: "warning 为建议性提示（如 timeline_track_too_dense / nested_structure_needs_subcomposition 属二期子组合改造），不拦截一期验收；error 与空静帧才判失败。0.3.0 起示例工程已带音轨，craft.film_silent 不应再出现。"
   };
   writeFileSync(qaFile, JSON.stringify(result, null, 2) + NL, "utf8");
   return emit(result, ok ? 0 : 1);

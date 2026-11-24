@@ -1,0 +1,32 @@
+# ============================================================
+# 草稿 / DRAFT
+# 待仓库满 1 天且描述复核后再手工提交到 awesome-dsh-plugin 的 data/plugins/
+# 提交前：① 删除本「草稿 / DRAFT」文件头注释；② 逐条对代码复核 description；
+#         ③ 确认 assets/plugin-icon.png 已推到 main（否则注释掉 icon 行）。
+# 本文件仅是本地待投稿草稿，尚未提交任何 PR。
+# ============================================================
+
+url: https://github.com/HJ-Create-World/dsh-cineforge
+name: HJ-Create-World/dsh-cineforge
+
+# category 选 skill 而非 workflow：
+# 本插件 0.3.0 的实际交付物是经 ctx.skills.register 注册的 3 个对话内技能
+# （cineforge-director / cineforge-cards / cineforge-qa）+ 1 个健康工具 cineforge_health，
+# 用户侧入口就是「技能」，故 skill 最接近。
+# workflow 指自动化多步流水线；11 阶段流水线目前是带硬确认门的设计 / 技能状态机，
+# 且尚无发布闭环，不宜按 workflow 归类。
+# 分类不会被打回，维护者可直接改；合法值之一：skill / workflow。
+category: skill
+
+# description.en：唯一必填；一句功能陈述、句号结尾、无营销词、不含未实现功能宣称。
+# 「three」= skills/cineforge-* 三个技能目录 + lib/index.js 的 ctx.skills.register；
+# 「a health tool」= cineforge_health；「compiles storyboard JSON」= scripts/compile-hf.mjs。
+description.en: Registers three in-chat DSH skills and a health tool, and compiles storyboard JSON into a renderable HyperFrames project.
+
+# description.zh：可选；缺翻译由维护者补，不是打回理由。
+description.zh: 注册 3 个对话内 DSH 技能与 1 个健康自检工具，并把分镜 JSON 编译成可渲染的 HyperFrames 工程。
+
+# icon：可选但推荐；1 张 GitHub 托管的位图（png/jpg/jpeg/webp），约 96px 显示、方形最佳；
+# SVG 与第三方图床会被拒。此 URL 仅在 assets/plugin-icon.png 推到 main 之后才生效；
+# 未推送时请注释掉本行，回退到作者 GitHub 头像。
+icon: https://raw.githubusercontent.com/HJ-Create-World/dsh-cineforge/main/assets/plugin-icon.png

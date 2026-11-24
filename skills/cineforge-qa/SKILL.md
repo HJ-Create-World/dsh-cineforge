@@ -13,17 +13,17 @@ description: 成片交付前的独立终检。对照 27 条判例式审美准则
 
 成片 + 关键帧抽帧、创意简报、需求决策表、当前模式与视觉方向 / styleframe、功能到镜头映射、Gallery 卡名与变体、准确 demo TSX、Gallery 参考样片抽帧、最终分镜表、选中的镜头卡全文、审美准则。
 
-## 运行时验收（0.2.0 起）
+## 运行时验收（0.3.0 起）
 
 插件接线后，除材料清单外必须核对机器产出的验收证据，不要只看人写的结论：
 
 - `out/qa/<id>.verify.json`：`scripts/verify-hf.mjs` 的报告，`ok=true` 且 lint/runtime/layout/motion/craft 各组 `error=0`、`frames>0`、`empty_frames=0`；warning 只记录、逐条判断是否属已登记的二期项。
 - contact-sheet 拼图与逐帧 png：必须**亲自用 read_image 看**，判断文字可读性、平台安全区留白、镜间变化是否明确；不接受「报告说通过」就算通过。
-- `manifest.json`：核对每镜 `start_s` / `dur_s` / `primitive` / `category` 与分镜表一致，末镜是否补了收尾留白。
+- `manifest.json`：核对每镜 `start_s` / `dur_s` / `primitive` / `layout` 与分镜表一致；**`declared_duration_s` / `declared_frames` 必须与 `duration_s` / `total_frames` 恒等且 `padding_seconds=0`**（0.3.0 不再静默补尾帧）；`primitive` 须逐条等于分镜显式声明（SHOTS 单一事实源）；核对 `audio.bgm` / `audio.sfx`、`aigc` 与 `publish_allowed`、`gsap_vendor` 无 CDN、`registry_pin`。
 - `index.html`：核对确定性（无 `Date.now` / `Math.random` / 网络请求）、恰好一个 `paused` timeline 注册到 `window.__timelines["main"]`。
 - 渲染成片用 ffprobe 核对 codec / 画幅 / fps / 帧数 / 时长，与分镜契约对照。
 
-一期示例片是「品味层」的占位式样片（字卡 + 网格，无真实产品截图、无复杂光影、无音轨）。终检须如实写明它离「Opus 级设计感」还差什么，不得因 check 0 error 就吹捧视觉质量；`film_silent` 属已知一期缺口，单独列缺陷而非放行理由。发布合规未补齐（AI 显式+隐式双标识、BGM/字体授权、无极限词）时，结论一律「不得进入发布阶段」。
+一期示例片仍是「品味层」的占位式样片：0.3.0 已补上音轨、6 种版式与两个功能镜头，但本质仍是字卡 + 网格（无真实产品截图、无复杂光影、无出版级排版、无机位语言）。终检须如实写明它离「Opus 级设计感」还差什么，不得因 check 0 error 就吹捧视觉质量。音频改用 `hyperframes audio <video> --json` 核对 LUFS / truePeak / clipping，并写明「已测量，未试听」（0.3.0 实测 −19.4 LUFS，比社交片 −16 到 −14 LUFS 偏安静）；`film_silent` 已消除，不应再作为放行理由。发布合规未补齐（`publish.ai_disclosure` 显式+隐式双标识、BGM/字体授权、无极限词、封面/标题/描述）时，结论一律「不得进入发布阶段」。
 
 ## 检查维度
 
@@ -33,7 +33,7 @@ description: 成片交付前的独立终检。对照 27 条判例式审美准则
 | 功能完整性 | 每个「必须展示的功能」是否都有镜头；有没有漏拍 |
 | 镜头还原度 | 与选中卡的参考样片 / demo 对比：意图、动作弧、参数是否降档 |
 | 视觉技术质量 | 文字锐度、穿帮、构图、光效裁剪、机位可读性、抖动 |
-| 音频技术质量 | 卡点误差（≤3f）、SFX 钉帧、音色、带/无 BGM 两版 |
+| 音频技术质量 | 卡点误差（≤3f）、SFX 钉帧、音色、响度 / 峰值 / clipping；带/无 BGM 两版若只渲 1 版须如实写明 |
 | 数据安全 | 是否含未授权的客户 / 个人 / 内部 / 密钥 / 实时数据 |
 
 ## 逐条过准则
@@ -57,7 +57,7 @@ Q4 ✗(s5·f120) 逐卡 glint 群发，且光溢出圆角
 2. **逐条准则表**（27 行）。
 3. **缺陷清单**：按严重度排序，每条含帧号证据、违反的准则、建议改法。
 4. **数据安全结论**：明确「通过 / 发现敏感数据」。
-5. **两版核对**：带 BGM 与无 BGM 版都已渲出。
+5. **音频与两版核对**：`hyperframes audio --json` 的响度 / 峰值 / clipping；带 BGM 与无 BGM 版是否都已渲出（0.3.0 示例只渲了带 BGM 1 版，须写明，不得默认两版齐全）。
 
 ## 高频缺陷（来自上游返工判例）
 

@@ -118,7 +118,9 @@ if (cmd === "status" || cmd === "install" || cmd === "uninstall") {
   const rb = registered[0] && registered[0].resourceBase;
   add("resourceBase kind is directory", !!rb && rb.kind === "directory");
   const root = rb ? rb.path : "";
-  add("resourceBase resolves to installed root", fwd(root) === fwd(base));
+  // link: installs resolve through a symlink; compare physical paths, not literal strings.
+  const real = (p) => { try { return fwd(fs.realpathSync(p)); } catch { return fwd(p); } };
+  add("resourceBase resolves to installed root", real(root) === real(base));
   for (const f of ["knowledge/storyboard.schema.json", "knowledge/shot-cards.json", "upstream/catalog.json", "skills/cineforge-qa/SKILL.md"]) {
     add("installed root has " + f, fs.existsSync(path.join(root, f.split("/").join(path.sep))));
   }
@@ -136,7 +138,14 @@ if (cmd === "status" || cmd === "install" || cmd === "uninstall") {
     checks: checks,
     note: "真实 import 已安装位置的 lib/index.js，用 mock 宿主 ctx 验证 3 个技能与工具注册；不依赖运行中的 DSH 进程。",
   };
-  console.log(JSON.stringify(out, null, 2));
+  const text = JSON.stringify(out, null, 2);
+  console.log(text);
+  try {
+    const rep = path.join(pluginRoot, ".local", "install-verify.json");
+    fs.mkdirSync(path.dirname(rep), { recursive: true });
+    fs.writeFileSync(rep, text + "\n", "utf8");
+    console.log("report: " + fwd(rep));
+  } catch (e) { console.error("report write failed: " + e); }
   process.exitCode = out.ok ? 0 : 1;
 } else {
   console.error("unknown command: " + cmd);

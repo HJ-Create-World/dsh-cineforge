@@ -107,7 +107,7 @@ ASSETS → BUILD → SOUND → QA → DELIVER ─[发布确认]→ PUBLISHED
 - 文字糊先查**纹理栅格化链路**（截图倍率 → 栅格化 → 缩放方式），别先调景深或相机（Q2 判例：调 DoF 治标无效）。
 - 为工作台留接口：语境级参数（文案 / 颜色 / 字号 / 位置）做成带默认值的 props + schema；节奏命门保持常量。
 
-### 运行时落地（0.2.0 起，插件已接线）
+### 运行时落地（0.3.0 起，插件已接线）
 
 分镜确认门放行、写出 `project.json`（`cineforge/storyboard/v1`）后，用插件自带的编译器把分镜落成可渲工程，**不要自己手写 HyperFrames HTML**（手写会破坏确定性契约与安全区布局）：
 
@@ -117,18 +117,18 @@ node scripts/compile-hf.mjs --project <project.json> --out out/<project_id>
 node scripts/verify-hf.mjs --out out/<project_id>
 ```
 
-- `scripts/compile-hf.mjs` 输出 6 文件：`index.html` / `hyperframes.json` / `package.json` / `meta.json` / `project.json` / `manifest.json`。它已固化确定性（禁 `Date.now()` / `Math.random()`、固定种子）、末镜自动补 0.6s 收尾留白（R1/R2）、按平台安全区布局、每镜只讲一个主动效。
-- `scripts/verify-hf.mjs` 必须返回 `ok=true` 才可进阶段 9：它跑 `hyperframes@0.9.88 check`（0 error），按每镜中点抽最多 6 个时间点静帧，产出 `out/qa/<id>.verify.json` 与 contact-sheet 拼图供肉眼复核；warning 只记录不拦截（子组合、示例无音轨属二期）。
-- 阶段 10 渲染（仅在阶段 9 终检放行后）：在 `out/<id>/` 里跑 `npx --yes hyperframes@0.9.88 render --output renders/<id>.mp4 --quality draft --fps 30 --workers 2`，再用 ffprobe 核对 codec / 画幅 / fps / 帧数 / 时长。
-- 一期编译器用 7 个确定性动效原语 + 10 类镜头映射（`lib/hf-primitives.mjs`），**不是 124 卡逐卡精确映射**（那是三期）。某镜若需精确还原某张卡的调校参数，按 `cineforge-cards` 的三读协议读准确 demo TSX 手动增强该镜，不要凭卡名重写。
-- 随时可跑 `node scripts/self-test.mjs`（离线 60 项自检，含两次编译 sha256 一致性）；插件安装 / 状态 / 校验 / 回滚用 `scripts/install-local.mjs`。
+- `scripts/compile-hf.mjs` 输出 8 文件 + `assets/`：`index.html` / `hyperframes.json` / `package.json` / `meta.json` / `project.json` / `manifest.json` / `aigc-metadata.json`，以及本地 GSAP、BGM、SFX 与两份 `ATTRIBUTION.md`。它已固化确定性（禁 `Date.now()` / `Math.random()`、固定种子 20261124、**SHOTS 单一事实源**：分镜显式 `primitive` 权威、声明时长与 manifest 恒等 `padding_seconds=0`、本地 GSAP 去 CDN、registry 钉 commit、`window.__timelines` 兜底、首帧非空）、按平台安全区 px 布局、6 种镜头版式、每镜只讲一个主动效、音频链（BGM + 钉帧 SFX + 署名链）、AI 标识元数据。**不再静默补 0.6s 尾帧**——收尾停顿必须在分镜阶段就排进帧预算。
+- `scripts/verify-hf.mjs` 必须返回 `ok=true` 才可进阶段 9：它跑 `hyperframes@0.9.88 check`（0 error），按每镜中点抽最多 6 个时间点静帧，产出 `out/qa/<id>.verify.json` 与 contact-sheet 拼图供肉眼复核；warning 只记录不拦截（子组合改造属二期；0.3.0 示例工程已带音轨，`craft.film_silent` 应已消除）。
+- 阶段 10 渲染（仅在阶段 9 终检放行后）：在 `out/<id>/` 里跑 `npx --yes hyperframes@0.9.88 render --output renders/<id>.mp4 --quality draft --fps 30 --workers 2`，再用 ffprobe 核对 codec / 画幅 / fps / 帧数 / 时长，并用 `npx --yes hyperframes@0.9.88 audio renders/<id>.mp4 --json` 核对响度 / 峰值 / clipping 与 `hasAudio`。
+- 一期编译器用 7 个确定性动效原语 + 10 类镜头映射（`lib/hf-primitives.mjs`）+ 6 种版式（`lib/hf-layouts.mjs`），分镜显式 `primitive` 逐条生效，**不是 124 卡逐卡精确映射**（那是三期）。某镜若需精确还原某张卡的调校参数，按 `cineforge-cards` 的三读协议读准确 demo TSX 手动增强该镜，不要凭卡名重写。
+- 随时可跑 `node scripts/self-test.mjs`（离线 86 项自检，含两次编译 10 个产物 sha256 一致性）；插件安装 / 状态 / 校验 / 回滚用 `scripts/install-local.mjs`（0.3.0 已装进 live `desktop` profile，27/27）。
 
 ## 阶段 8：声音
 
 - 强节奏 BGM：先做 BPM/相位 + kick/snare/hihat 网格拟合，验收通过后镜头边界锚到拍号。
 - **卡拍管的是时机不是幅度**：作用于整画面/相机层的节拍冲击全片 ≤3 处，其余拍点只动元素层（R4 判例：逐拍全画面泵 = 观感抖动）。
 - 音色走电影系词汇，不用游戏 UI tap；弹起 / 光效 / 落定各有专属音。
-- 配 BGM 的片子固定交付两版：带 BGM + 无 BGM（保留 SFX）。
+- 配 BGM 的片子原则上固定交付两版：带 BGM + 无 BGM（保留 SFX）。**0.3.0 示例只渲了带 BGM 一版**，这是已知缺口，终检须如实写明，不要默认两版齐全。
 
 ## 阶段 9：独立终检
 

@@ -1,17 +1,17 @@
 #!/usr/bin/env node
-// CineForge · 离线自检（零依赖、零网络、零 CLI）
+// CineForge · 离线自检（零依赖、零网络、零 CLI） v0.3
 // 用法：node scripts/self-test.mjs
-// 校验：插件清单 /补丁 / 3 技能 frontmatter 与注册 / health 工具 / 知识库 JSON / 卡库 / 编译确定性 / 验收报告 schema
+// 校验：插件清单 / 补丁 / 3 技能 frontmatter 与注册 / health 工具 / 知识库 JSON / 卡库 /
+//       编译确定性（8 文件 + 复制资产）/ v2 manifest 契约 / 音频与 AIGC / 单一事实源。
 
-import { readFileSync, existsSync, mkdtempSync, rmSync } from "node:fs";
+import { readFileSync, existsSync, mkdtempSync, rmSync, mkdirSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { tmpdir } from "node:os";
 import { loadSkills, parseSkill, SKILL_NAMES } from "../lib/skill-loader.js";
 import { apply, name as pluginName, inject } from "../lib/index.js";
-import { PRIMITIVES, TOKEN_EASE, DEFAULT_TOKEN_ID } from "../lib/hf-primitives.mjs";
+import { PRIMITIVES, TOKEN_EASE, DEFAULT_TOKEN_ID, resolvePrimitive } from "../lib/hf-primitives.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const NL = String.fromCharCode(10);
@@ -22,6 +22,7 @@ function check(label, cond, detail) {
 }
 function readJson(p) { return JSON.parse(readFileSync(p, "utf8")); }
 function sha(buf) { return createHash("sha256").update(buf).digest("hex"); }
+function fileSha(p) { return sha(readFileSync(p)); }
 
 async function main() {
   const pkg = readJson(join(ROOT, "package.json"));
@@ -33,6 +34,11 @@ async function main() {
   check("cordis.patch.yml 存在", existsSync(join(ROOT, "cordis.patch.yml")));
   const patch = readFileSync(join(ROOT, "cordis.patch.yml"), "utf8");
   check("补丁声明 cineforge-skills", patch.indexOf("cineforge-skills") >= 0 && patch.indexOf("- insert:") >= 0);
+  // v0.3：新增 lib/vendor 与 assets 必须在 npm pack files 白名单里
+  const files = pkg.files || [];
+  check("files 收录 lib", files.indexOf("lib") >= 0);
+  check("files 收录 assets", files.indexOf("assets") >= 0);
+  check("files 收录 CHANGELOG", files.indexOf("CHANGELOG.md") >= 0 || files.indexOf("README.en.md") >= 0);
 
   const spec = readJson(join(ROOT, "spec.json"));
   check("spec schema", spec.name === "CineForge" && spec.type === "dsh-plugin");
@@ -92,28 +98,52 @@ async function main() {
   check("catalog 生态 18 条", readJson(join(ROOT, "upstream", "catalog.json")).ecosystem_review.length === 18);
   check("动效原语 7 个", Object.keys(PRIMITIVES).length === 7);
   check("token ease 6 个", Object.keys(TOKEN_EASE).length === 6 && DEFAULT_TOKEN_ID === "professional-trust");
+  // v0.3：单一事实源 —— 显式声明的 primitive 必须原样返回，不被 transition_in 覆盖
+  check("primitive 声明优先", resolvePrimitive({ primitive: "wipe", transition_in: "cut" }, "opening") === "wipe");
+  check("primitive 兜底推导", resolvePrimitive({ transition_in: "hidden-cut" }, "opening") === "fade");
 
-  // 编译确定性：两次编译逐字节相同
+  // 编译确定性：两次编译逐字节相同（含 v0.3 新增文件）
   const proj = join(ROOT, "examples", "demo-project.json");
-  const t1 = mkdtempSync(join(tmpdir(), "cineforge-a-"));
-  const t2 = mkdtempSync(join(tmpdir(), "cineforge-b-"));
+  const tmpBase = join(ROOT, ".local", "selftest");
+  mkdirSync(tmpBase, { recursive: true });
+  const t1 = mkdtempSync(join(tmpBase, "a-"));
+  const t2 = mkdtempSync(join(tmpBase, "b-"));
   try {
     for (const t of [t1, t2]) {
       const r = spawnSync(process.execPath, [join(ROOT, "scripts", "compile-hf.mjs"), "--project", proj, "--out", t], { encoding: "utf8" });
       check("compile exit 0", r.status === 0, String(r.stderr || "").slice(-300));
     }
-    const outs = ["index.html", "hyperframes.json", "package.json", "meta.json", "project.json", "manifest.json"];
+    const outs = ["index.html", "hyperframes.json", "package.json", "meta.json", "project.json", "manifest.json", "aigc-metadata.json", "vendor/gsap.min.js", "assets/audio/ATTRIBUTION.md", "assets/audio/bgm/cineforge-bgm-20s.mp3"];
     for (const n of outs) {
-      check("确定性 " + n, existsSync(join(t1, n)) && existsSync(join(t2, n)) && sha(readFileSync(join(t1, n))) === sha(readFileSync(join(t2, n))));
+      check("确定性 " + n, existsSync(join(t1, n)) && existsSync(join(t2, n)) && fileSha(join(t1, n)) === fileSha(join(t2, n)));
     }
     const m = readJson(join(t1, "manifest.json"));
-    check("manifest 5 镜", m.shot_count === 5 && m.shots.length === 5);
-    check("manifest deterministic", m.deterministic === true);
+    check("manifest v2 schema", m.schema === "cineforge/hf-manifest/v2");
+    check("manifest 6 镜", m.shots.length === 6 && m.layouts.length === 6);
+    check("manifest deterministic", m.deterministic === true && m.seed === 20261124);
     check("manifest 无 warning", m.warnings.length === 0);
+    check("manifest padding 0", m.padding_seconds === 0 && m.declared_duration_s === 20 && m.declared_frames === 600);
+    check("manifest 时长恒等", m.duration_s === m.declared_duration_s && m.total_frames === m.declared_frames);
+    check("manifest primitive_policy", typeof m.primitive_policy === "string" && m.primitive_policy.indexOf("authoritative") >= 0);
+    check("manifest 6 版式", m.layouts.map((l) => l.layout).join(",") === "title,quote,card-grid,checklist,metric,outro");
+    check("manifest audio bgm+sfx", m.audio && m.audio.bgm && m.audio.sfx && m.audio.sfx.length >= 6);
+    check("manifest aigc 元数据", m.aigc && m.aigc.metadata_sidecar === "aigc-metadata.json");
+    check("manifest 发布未放行", m.publish_allowed === false);
+    check("manifest gsap 本地化", m.gsap_vendor && m.gsap_vendor.indexOf("no CDN") >= 0);
+    check("manifest registry 钉版", m.registry_pin && m.registry_pin.length === 40);
+    // 单一事实源：manifest primitive 与分镜声明逐条一致
+    const sb = readJson(proj);
+    check("primitive 单一事实源", m.layouts.every((l, i) => l.primitive === sb.shots[i].primitive));
     const html = readFileSync(join(t1, "index.html"), "utf8");
     check("产物无 Date.now", html.indexOf("Date.now") < 0);
     check("产物无 Math.random", html.indexOf("Math.random") < 0);
-    check("产物注册 main timeline", html.indexOf('window.__timelines["main"]') >= 0);
+    check("产物注册 main timeline", html.indexOf(String.fromCharCode(119,105,110,100,111,119,46,95,95,116,105,109,101,108,105,110,101,115,91,34,109,97,105,110,34,93)) >= 0);
+    check("timelines 兜底", html.indexOf("window.__timelines = window.__timelines || {}") >= 0);
+    check("产物无 CDN 外链", html.indexOf("cdn.jsdelivr") < 0 && html.indexOf("unpkg.com") < 0);
+    check("产物引用本地 gsap", html.indexOf("./vendor/gsap.min.js") >= 0);
+    check("产物 6 个 clip shot", (html.match(/class="clip shot"/g) || []).length === 6);
+    check("产物 7 条 audio", (html.match(/<audio /g) || []).length === 7);
+    check("产物 aigc meta", html.indexOf(String.fromCharCode(110,97,109,101,61,34,97,105,103,99,34)) >= 0);
   } finally {
     try { rmSync(t1, { recursive: true, force: true }); } catch (e) {}
     try { rmSync(t2, { recursive: true, force: true }); } catch (e) {}
@@ -125,6 +155,7 @@ async function main() {
     schema: "cineforge/self-test/v1",
     plugin: pluginName,
     inject,
+    version: "0.3.0",
     total: results.length,
     passed: results.length - failed.length,
     failed,

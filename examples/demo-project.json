@@ -2,37 +2,258 @@
   "schema": "cineforge/storyboard/v1",
   "project": {
     "id": "cineforge-demo-01",
-    "idea": "给开源项目 CineForge 做一支 15 秒抖音竖屏预告",
-    "brief": "影铸 · 让普通模型也有 Opus 级设计感",
-    "audience": "独立开发者与 AI 视频创作者",
-    "goal": "让人记住 124 张镜头配方卡与分镜确认门",
+    "idea": "给普通模型装上导演级设计感",
+    "brief": "影铸 CineForge · 把想法变成可确认的分镜和成片",
+    "audience": "想做产品宣传片的独立开发者",
+    "goal": "展示分镜确认门与镜头配方库",
     "platform": "douyin",
     "aspect": "9:16",
-    "duration_s": 15,
-    "language": "zh-CN",
-    "mode": "autonomous"
+    "duration_s": 20,
+    "language": "zh",
+    "mode": "autonomous",
+    "fps": 30
   },
   "design_spec": {
-    "palette": { "ground": "#0B0E14", "ink": "#F5F1E8", "accent": "#D3923C", "muted": "#8A8F9A", "panel": "#151A24" },
-    "typography": "sans-serif 系统字族，标题 7% 帧宽",
+    "palette": {
+      "ground": "#0B0E14",
+      "ink": "#F4F1EA",
+      "accent": "#D3923C",
+      "muted": "#C9C3B6",
+      "panel": "#161B24",
+      "grid": "rgba(211,146,60,0.10)"
+    },
+    "typography": {
+      "display": "sans-serif",
+      "body": "sans-serif"
+    },
     "motion_tokens_id": "energetic-bold",
     "energy_curve": "opening(low) -> function(mid-high) -> breath(low) -> outro(peak)",
     "styleframe_refs": [],
-    "data_policy": "全部为虚构占位文案，无真实数据"
+    "data_policy": "no personal data; placeholder copy only"
   },
   "shots": [
-    { "id": "s01", "from": 0, "duration_f": 90, "card_id": "brand-ink-open", "card_style_key": "brand-ink-open", "category": "opening", "intent": "纸墨品牌开场", "action": "从深底色里长出品名", "caption": "影铸 CineForge", "transition_in": "fade", "energy": "low", "backend": "hyperframes" },
-    { "id": "s02", "from": 90, "duration_f": 120, "card_id": "blur-slide", "card_style_key": "blur-slide", "category": "typography", "intent": "一句话主张", "action": "主标题模糊滑入落定", "caption": "普通模型，也能有导演级设计感", "transition_in": "slide-up", "energy": "mid-high", "backend": "hyperframes" },
-    { "id": "s03", "from": 210, "duration_f": 120, "card_id": "card-stack", "card_style_key": "card-stack", "category": "ui-entrance", "intent": "展示镜头配方卡", "action": "卡片堆叠错落入场", "caption": "124 张镜头配方卡", "transition_in": "slide-left", "energy": "mid-high", "backend": "hyperframes" },
-    { "id": "s04", "from": 330, "duration_f": 60, "card_id": "beat-cut-moves", "card_style_key": "beat-cut-moves", "category": "rhythm", "intent": "呼吸字卡", "action": "停顿留白", "caption": "先确认分镜，再开机", "transition_in": "fade", "energy": "low", "backend": "hyperframes" },
-    { "id": "s05", "from": 390, "duration_f": 60, "card_id": "outro-group-photo-launch", "card_style_key": "outro-group-photo-launch", "category": "outro", "intent": "品牌收场", "action": "字标锁定 hold 满 1 秒", "caption": "CineForge · 开源", "transition_in": "hidden-cut", "energy": "peak", "backend": "hyperframes" }
+    {
+      "id": "s01",
+      "card_id": "brand-ink-open",
+      "from": 0,
+      "duration_f": 90,
+      "category": "opening",
+      "transition_in": "fade",
+      "transition_out": "cut",
+      "intent": "品牌开场",
+      "action": "字标落定",
+      "energy": "low",
+      "layout": "title",
+      "primitive": "crash-zoom",
+      "backend": "hyperframes",
+      "caption": "影铸 CineForge",
+      "copy": {
+        "title": "影铸\nCineForge",
+        "sub": "想法，到成片。",
+        "foot": "AI 生成 · 影铸 CineForge"
+      },
+      "sfx_cue": "impact-cine"
+    },
+    {
+      "id": "s02",
+      "card_id": "blur-slide",
+      "from": 90,
+      "duration_f": 90,
+      "category": "typography",
+      "transition_in": "slide",
+      "transition_out": "cut",
+      "intent": "价值主张",
+      "action": "标语推入",
+      "energy": "mid",
+      "layout": "quote",
+      "primitive": "slide-up",
+      "backend": "hyperframes",
+      "caption": "普通模型，也能有导演级设计感",
+      "copy": {
+        "title": "普通模型\n也能有导演级设计感",
+        "sub": "先定分镜，再开机。",
+        "foot": "分镜先行 · 不用懂剪辑"
+      },
+      "sfx_cue": "whoosh-fast"
+    },
+    {
+      "id": "s03",
+      "card_id": "card-stack",
+      "from": 180,
+      "duration_f": 120,
+      "category": "ui-entrance",
+      "transition_in": "push",
+      "transition_out": "cut",
+      "intent": "展示镜头配方库",
+      "action": "三卡依次落定",
+      "energy": "mid-high",
+      "layout": "card-grid",
+      "primitive": "slide-left",
+      "backend": "hyperframes",
+      "caption": "124 张镜头配方卡",
+      "copy": {
+        "title": "124 张镜头配方卡",
+        "sub": "选卡即定动效。",
+        "items": [
+          {
+            "label": "运镜",
+            "meta": "CAMERA · 10"
+          },
+          {
+            "label": "字排",
+            "meta": "TYPOGRAPHY · 22"
+          },
+          {
+            "label": "转场",
+            "meta": "TRANSITION · 15"
+          }
+        ],
+        "foot": "三读协议：读卡 → 读参数 → 读实现"
+      },
+      "sfx_cue": "transition-snap"
+    },
+    {
+      "id": "s04",
+      "card_id": "confirm-gate",
+      "from": 300,
+      "duration_f": 120,
+      "category": "interaction",
+      "transition_in": "cut",
+      "transition_out": "cut",
+      "intent": "展示分镜确认门",
+      "action": "清单逐条勾选",
+      "energy": "mid-high",
+      "layout": "checklist",
+      "primitive": "scale-in",
+      "backend": "hyperframes",
+      "caption": "分镜确认门",
+      "copy": {
+        "title": "分镜确认门",
+        "sub": "没点确认，不进渲染。",
+        "items": [
+          {
+            "label": "文案已定稿"
+          },
+          {
+            "label": "分镜已排布"
+          },
+          {
+            "label": "动效待你确认",
+            "pending": true
+          }
+        ],
+        "foot": "停在 STORYBOARD，等你放行"
+      },
+      "sfx_cue": "click-camera"
+    },
+    {
+      "id": "s05",
+      "card_id": "data-counter",
+      "from": 420,
+      "duration_f": 90,
+      "category": "data",
+      "transition_in": "dissolve",
+      "transition_out": "cut",
+      "intent": "展示动效预览量",
+      "action": "数字落定",
+      "energy": "low",
+      "layout": "metric",
+      "primitive": "wipe",
+      "backend": "hyperframes",
+      "caption": "150 个动效预览",
+      "copy": {
+        "title": "每个动效都能先看一眼",
+        "metric": "150",
+        "sub": "先看一眼，再拍。",
+        "foot": "来自 video-shotcraft gallery"
+      },
+      "sfx_cue": "swoosh-quick"
+    },
+    {
+      "id": "s06",
+      "card_id": "outro-group-photo-launch",
+      "from": 510,
+      "duration_f": 90,
+      "category": "outro",
+      "transition_in": "hidden-cut",
+      "transition_out": "end",
+      "intent": "收尾合影与品牌锁定",
+      "action": "品牌字标 hold + 进度条推进",
+      "energy": "peak",
+      "layout": "outro",
+      "primitive": "hold",
+      "backend": "hyperframes",
+      "caption": "CineForge · 开源",
+      "copy": {
+        "title": "CineForge · 影铸",
+        "sub": "成片归你，免费商用。",
+        "foot": "一句话，开拍。"
+      },
+      "sfx_cue": "impact-cine"
+    }
   ],
   "audio": {
-    "bgm": { "ref": "", "bpm": 0, "phase": 0, "beat_grid": [], "hit_list": [] },
-    "sfx": [], "voiceover": []
+    "bgm": {
+      "ref": "cineforge-bgm-20s.mp3",
+      "bpm": 129,
+      "phase": 0,
+      "beat_grid": [],
+      "hit_list": [
+        0,
+        3,
+        6,
+        10,
+        14,
+        17
+      ],
+      "volume": 0.42
+    },
+    "sfx": [
+      {
+        "file": "impact-cine.mp3",
+        "at": 0,
+        "volume": 0.85
+      },
+      {
+        "file": "whoosh-fast.mp3",
+        "at": 3,
+        "volume": 0.7
+      },
+      {
+        "file": "transition-snap.mp3",
+        "at": 6,
+        "volume": 0.8
+      },
+      {
+        "file": "click-camera.mp3",
+        "at": 10,
+        "volume": 0.85
+      },
+      {
+        "file": "swoosh-quick.mp3",
+        "at": 14,
+        "volume": 0.75
+      },
+      {
+        "file": "impact-cine.mp3",
+        "at": 17,
+        "volume": 0.9
+      }
+    ],
+    "voiceover": []
   },
   "publish": {
-    "platforms": ["douyin"], "title": "", "description": "", "tags": [],
-    "cover": "", "ai_disclosure": { "explicit": false, "implicit": false }, "schedule": ""
+    "platforms": [
+      "douyin"
+    ],
+    "title": "",
+    "description": "",
+    "tags": [],
+    "cover": "",
+    "ai_disclosure": {
+      "explicit": false,
+      "implicit": false
+    },
+    "schedule": ""
   }
 }
