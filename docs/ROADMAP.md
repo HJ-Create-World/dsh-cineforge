@@ -20,11 +20,15 @@
 | 设计文档 | 总纲 / 工作台 / 路线图 / 生态调研 | ✅ 已完成 |
 | 插件市场与生态调研 | 无同名插件、HyperFrames 定位、MotionHarness 判定、发布链路合规 | ✅ 已完成 |
 | 三读协议与署名链 | cards 技能固化三读协议；4 份 ATTRIBUTION 保留；director 加合规硬门 | ✅ 已完成 |
-| **运行时接线** | npm 包骨架（`package.json` 的 dsh 字段 + `cordis.patch.yml`）、`ctx.skills.register`、HyperFrames 编译适配器、静帧验收脚本 | ⬜ 待实现 |
+| **运行时接线** | npm 包骨架（`package.json` 的 dsh 字段 + `cordis.patch.yml`）、`ctx.skills.register`、HyperFrames 编译适配器、静帧验收脚本、离线自检、本机接线脚本 | ✅ 已完成（0.2.0 runtime） |
 | **一期补齐（生态结论）** | 双画幅预设 + 安全区、ffmpeg 抽 poster、SRT/硬字幕、whisper.cpp / librosa / subtitle.js / wavesurfer.js / dotLottie-web 接入、AI 标识元数据 | ⬜ 待实现 |
-| **端到端验证** | 用一句 idea 跑通到 MP4 + 终检报告 | ⬜ 待实现 |
+| **端到端验证** | 用一句 idea 跑通到 MP4 + 终检报告 | ✅ 已完成：demo 渲染 H.264 / 1080×1920 / 30fps / 468 帧 / 15.6s；静帧验收 7 帧全通过；独立 QA 终检（见下） |
 
-**一期验收**：在 DSH 对话里说「给我的 XX 做个 45 秒抖音视频」，技能自动触发 → 分镜确认 → 输出 MP4 + 终检报告。
+**一期验收（实测）**：在 DSH 对话里说「给我的 XX 做个 45 秒抖音视频」，技能自动触发 → 分镜确认 → 输出 MP4 + 终检报告。
+
+编译器链路已在 `examples/demo-project.json` 上端到端跑通：`compile-hf.mjs` → `verify-hf.mjs`（check 0 error / 7 帧静帧）→ `hyperframes render` → ffprobe 核对（H.264 / 1080×1920 / 30fps / 468 帧 / 15.6s / 5.0MB）。`self-test.mjs` 60/60、`install-local.mjs verify` 27/27（隔离 profile 真实 `npm pack` → `npm install` → import）。
+
+**唯一未执行的运行期动作**：把插件装进正在运行的 `desktop` profile 并重载（`patchReload: live` 会热重载当前 GUI，故留给用户决定）。一键安装/回滚脚本已就绪：`node scripts/install-local.mjs install --apply` / `uninstall --apply`。
 
 **插件落地形态（已实测）**：DSH 插件 = npm 包，声明全在 `package.json` 的 `dsh` 字段，靠 `cordis.patch.yml` 的 `- insert:` 行加载；能力用 `ctx.skills.register` / `ctx.tools` 注册；Web UI 另用 `exports["./client"]` + `ctx.slots.inject`。客户端 HMR 走 `/plugins/events` SSE（需 `pnpm run dev:web` + watcher，Electron 不走此路）。安装：`dsh plugin --profile desktop add <spec>`。
 
@@ -60,8 +64,8 @@
 
 1. **插件名与 GitHub 仓库名** → 已定为 `CineForge 影铸` / [`HJ-Create-World/dsh-cineforge`](https://github.com/HJ-Create-World/dsh-cineforge)（公开仓库已创建）。如要改名请告知。
 2. **公开 / 私有** → 已按 m00001「你可以在 github 上创建新的仓库」建为 **public**。
-3. **一期先做「对话内技能」还是先做「独立工作台」** → 本路线图按「先对话内技能」编排；仍待用户确认。
-4. **是否投入做 124 卡 → HF 的自动映射表** → 编排在三期，仍待用户确认。
+3. **一期先做「对话内技能」还是先做「独立工作台」** → 用户 m00198 已确认：**先对话内技能优先**（一期已按此落地）。
+4. **是否投入做 124 卡 → HF 的自动映射表** → 用户 m00198 已确认：**三期再做**（一期只用 7 个确定性原语 + 10 类映射，不追求逐卡精确映射）。
 
 ## 生态候选（已调研定稿）
 

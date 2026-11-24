@@ -1,0 +1,7 @@
+# dsh-cineforge 组合包补丁：把 CineForge 导演台技能插件行插入 profile。
+# 插件加载即把 3 个技能注册进 ctx.skills（技能目录实时可见），无需配置。
+# 注意：resourceBase 指向插件根目录，使技能正文里的 knowledge/... 与 upstream/... 相对引用可解析。
+- insert:
+    - id: cineforge-skills
+      name: dsh-cineforge
+      config: {}

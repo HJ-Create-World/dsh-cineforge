@@ -17,3 +17,6 @@ src/workbench/public/_linked/
 
 # gh CLI / 本地工具状态，不入库
 .local/
+
+# 生成的编译产物 / 静帧 / MP4（可重跑复现，不入库）
+out/

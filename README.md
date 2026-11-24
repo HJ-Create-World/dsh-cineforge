@@ -5,6 +5,62 @@
 
 GitHub：[HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-cineforge) · 上游：[video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft)（Apache-2.0）
 
+## 当前状态：runtime 0.2.0（已接线，可跑通到 MP4）
+
+> 设计阶段（0.1.0-design）已于 2026-11-24 经用户批准收尾；本版是**运行时接线版**。
+
+| 能力 | 落地 | 实测结果 |
+|---|---|---|
+| 技能注册 | `lib/index.js` + `lib/skill-loader.js`：3 个技能经 `ctx.skills.register` 注册，`resourceBase` 指向插件根 | `scripts/self-test.mjs` 60/60；隔离安装 `npm pack` → `npm install` → 真实 import 27/27 |
+| 分镜编译 | `scripts/compile-hf.mjs` 把 `cineforge/storyboard/v1` 编译成 HyperFrames standalone 组合（6 文件） | `hyperframes@0.9.88 check` 0 error（7 warning 均属二期子组合 / 示例无音轨） |
+| 静帧验收 | `scripts/verify-hf.mjs`：check 报告解析 + 最多 6 个时间点 snapshot + contact-sheet 拼图 | 7 帧 png 全非零字节，`ok=true` |
+| 成片渲染 | `npx --yes hyperframes@0.9.88 render` | `examples/demo-project.json` → `renders/cineforge-demo-01.mp4`；ffprobe：H.264 / 1080×1920 / 30fps / 468 帧 / 15.6s / 5.0MB |
+| 离线自检 | `scripts/self-test.mjs`（零 CLI、零网络） | 60/60，含两次编译逐字节 sha256 相同（确定性渲染） |
+| 本机接线 | `scripts/install-local.mjs`：status / install / uninstall / verify，幂等、可回滚、默认 dry-run | 隔离 profile 上 install → 幂等 → uninstall 全通过，备份齐全 |
+
+**尚未执行的一步**：把插件装进正在运行的 `desktop` profile（`node scripts/install-local.mjs install --apply` 后重载 profile / 重启 DSH）。这一步会触发 `patchReload: live`、可能打断当前 GUI 会话，故未擅自执行；一键安装与一键回滚脚本都已备好（见「安装到 DSH」）。
+
+## 快速开始（运行时）
+
+```bash
+# 0. 离线自检（零依赖，秒级）
+npm test                         # scripts/self-test.mjs：60/60
+
+# 1. 分镜源：examples/demo-project.json（cineforge/storyboard/v1，抖音 9:16，5 镜）
+#    真实使用由 cineforge-director 技能在对话中产出，并须经过分镜确认门
+
+# 2. 编译成 HyperFrames 工程（零依赖 ESM，输出 6 个文件到 out/<id>/）
+node scripts/compile-hf.mjs --project examples/demo-project.json --out out/cineforge-demo-01
+
+# 3. 静帧验收（check + snapshot + 拼图，自动出 JSON 报告）
+node scripts/verify-hf.mjs --out out/cineforge-demo-01
+#    → out/qa/cineforge-demo-01.verify.json（ok=true）
+
+# 4. 渲染 MP4（只在用户确认后执行；本机实测约 4 分 22 秒 / 468 帧）
+cd out/cineforge-demo-01
+npx --yes hyperframes@0.9.88 render --output renders/cineforge-demo-01.mp4 --quality draft --fps 30 --workers 2
+
+# 5. 核对成片参数
+ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height,r_frame_rate,nb_frames,duration -of json renders/cineforge-demo-01.mp4
+```
+
+编译器的确定性保证：禁 `Date.now()` / `Math.random()`、固定种子、每镜只讲一个主动效、末镜自动补 0.6s 收尾留白（上游审美准则 R1/R2），并自动按平台安全区布局（抖音底部 20% + 右侧 15% UI 留白）。
+
+## 安装到 DSH
+
+```bash
+# 正式分发（推荐：走 npm 包 / git URL）
+dsh plugin --profile desktop add HJ-Create-World/dsh-cineforge
+
+# 本机开发（源码 link，改动即时生效）
+node scripts/install-local.mjs status                 # 默认 dry-run，只看不改
+node scripts/install-local.mjs install --apply      # 写入前自动备份到 .local/profile-backup/
+node scripts/install-local.mjs verify               # 真实 import 已安装位置，27 项校验
+node scripts/install-local.mjs uninstall --apply    # 一键回滚
+```
+
+插件的 `cordis.patch.yml` 由宿主在加载 bundle 时自动合并（`package.json` 的 `dsh.bundle.patch`），**不需要**写进 profile 的 `cordis.patch.yml`。安装脚本只改 `package.json` 的 `dependencies` 与 `dsh.profile.bundles` 两处。安装后重载 profile，DSH 对话里即出现 `cineforge-director` / `cineforge-cards` / `cineforge-qa` 三个技能与 `cineforge_health` 自检工具。
+
 ## 交付物
 
 | 文件 | 说明 |
@@ -13,24 +69,35 @@ GitHub：[HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-
 | `docs/工作台设计.md` | 独立视频创作工作台的面板 / 交互 / 状态机设计（含线框） |
 | `docs/ROADMAP.md` | 分期路线图：一期可用、二期工作台、三期发布闭环 |
 | `docs/RESEARCH-生态调研.md` | **调研定稿**：插件市场（无同名插件）、HyperFrames 定位、MotionHarness 判定、动效生态分期、B站/抖音发布合规 |
-| `skills/cineforge-director/` | **导演技能**：idea → 分镜确认 → 成片的状态机与阶段约束 |
-| `skills/cineforge-cards/` | **镜头卡技能**：124 张配方卡的检索与选卡规则 |
-| `knowledge/shot-cards.json` | 124 张卡 / 150 个 style 的机器可读品味索引（派生自上游） |
-| `knowledge/shot-cards.md` | 同上的人读目录 |
-| `knowledge/motion-tokens.json` | 品牌 → 动效参数表（6 预设 × 2 轴） |
-| `knowledge/aesthetic-rules.json` | 判例式审美准则的机器可读版（R/Q/S/C/P） |
-| `knowledge/platform-presets.json` | B 站 / 抖音 / 小红书 / YouTube / 视频号的画幅与安全区预设 |
-| `knowledge/storyboard.schema.json` | 分镜 JSON 契约（插件各层之间的唯一事实源） |
-| `upstream/catalog.json` | **上游单一事实源**：精确版本、许可、引入方式、用途 |
+| `package.json` / `cordis.patch.yml` | DSH 插件清单与组合包补丁（`dsh.bundle.patch`） |
+| `lib/index.js` / `lib/skill-loader.js` | 插件入口：3 技能注册 + `cineforge_health` 工具 + 卸载清理 |
+| `lib/hf-primitives.mjs` | 7 个确定性 GSAP 动效原语 + 10 类镜头映射 + 6 预设缓动 |
+| `lib/hf-template.html` / `.css` / `hf-shot.html` / `hf-timeline.js` | HyperFrames standalone 组合模板（占位符替换） |
+| `scripts/compile-hf.mjs` | 分镜 JSON → HyperFrames 工程编译器 |
+| `scripts/verify-hf.mjs` | 静帧验收：check 报告 + snapshot + contact-sheet + JSON 报告 |
+| `scripts/self-test.mjs` | 完全离线的 60 项自检（含确定性 sha256 比对） |
+| `scripts/install-local.mjs` | 本机接线：幂等安装 / 状态 / 校验 / 回滚 |
 | `scripts/fetch-upstream.mjs` | 按 catalog 精确拉取上游快照（API 取 SHA → codeload tar.gz） |
 | `scripts/build-card-index.mjs` | 从上游配方卡重建品味索引（幂等、可重跑） |
+| `examples/demo-project.json` | 端到端示例分镜（抖音 9:16，15s，5 镜） |
+| `skills/cineforge-director/` | **导演技能**：idea → 分镜确认 → 成片的状态机与阶段约束 |
+| `skills/cineforge-cards/` | **镜头卡技能**：124 张配方卡的检索与三读协议 |
+| `skills/cineforge-qa/` | **终检技能**：干净上下文独立 subagent，27 条判例逐条核对 |
+| `knowledge/shot-cards.json` / `.md` | 124 张卡 / 150 个 style 的机器可读品味索引（派生自上游） |
+| `knowledge/motion-tokens.json` | 品牌 → 动效参数表（6 预设 × 2 轴） |
+| `knowledge/aesthetic-rules.json` | 判例式审美准则的机器可读版（R/Q/S/C/P 共 27 条） |
+| `knowledge/energy-arc.json` | 6 段能量曲线 + 帧预算 |
+| `knowledge/platform-presets.json` | B 站 / 抖音 / 小红书 / YouTube / 视频号的画幅与安全区预设 |
+| `knowledge/storyboard.schema.json` | 分镜 JSON 契约（插件各层之间的唯一事实源） |
+| `upstream/catalog.json` | **上游单一事实源**：精确版本、许可、引入方式、18 条生态评估、合规段 |
 | `spec.json` | 机器可读项目规格 |
 | `LICENSE` / `NOTICE` | Apache-2.0 与上游署名声明 |
 
 ## 规格
 
-- **类型**：DSH 插件（npm 包 + `cordis.patch.yml` + `ctx.skills.register` / `ctx.slots.inject`），非独立应用
-- **主渲染后端**：HyperFrames（DSH 内置 `dsh-hyperframes` 0.14.1，运行时依赖，不 vendor）
+- **类型**：DSH 插件（npm 包 + `cordis.patch.yml` + `ctx.skills.register`），非独立应用
+- **版本 / 状态**：0.2.0 / runtime（已接线、可跑通到 MP4）
+- **主渲染后端**：HyperFrames（DSH 内置 `dsh-hyperframes` 0.14.1；CLI 钉 `hyperframes@0.9.88`），运行时依赖，不 vendor
 - **次渲染后端**：Remotion（自定 License，仅用于复刻上游调校过的 TSX 镜头，**本插件不分发**）
 - **上游**：[video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft)，Apache-2.0，作者 Wei Yihao，锁定 SHA `59f3e9b9e936ff2bce0e18446226d770a3f2f61f`
 - **上游存档位置**：`03_Video/01_Github/02_video-shotcraft`（保持原始结构，未重构，保留 LICENSE）
@@ -39,18 +106,16 @@ GitHub：[HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-
 - **成片规格**：默认 1920×1080 @ 30fps；竖屏平台 1080×1920；确定性渲染（固定种子）
 - **分镜契约**：`cineforge/storyboard/v1`，SHOTS 为唯一事实源
 
-## 重跑方式
+## 重跑与重建索引
 
 ```bash
-# 1. 精确拉取上游快照（本机直连 git clone github.com:443 常失败，走此脚本）
+# 精确拉取上游快照（本机直连 git clone github.com:443 常失败，走此脚本）
 node scripts/fetch-upstream.mjs --id video-shotcraft
 
-# 2. 从上游配方卡重建品味索引（幂等）
-node scripts/build-card-index.mjs \
-  --src "../../01_Github/02_video-shotcraft" \
-  --out knowledge
+# 从上游配方卡重建品味索引（幂等）
+node scripts/build-card-index.mjs --src "../../01_Github/02_video-shotcraft" --out knowledge
 
-# 3. 校验索引完整性（应为 124 cards / 150 styles）
+# 校验索引完整性（应为 124 cards / 150 styles）
 node -e "const j=require('./knowledge/shot-cards.json');console.log(j.card_count,j.style_count)"
 ```
 
@@ -84,6 +149,8 @@ node -e "const j=require('./knowledge/shot-cards.json');console.log(j.card_count
 2. **JSDoc 里写 glob 会炸**：`build-card-index.mjs` 注释里写 `references/shots/**/*.md`，其中 `*/` 提前闭合了块注释，导致 `SyntaxError: Unexpected token '*'`。解法：注释里不要写 `**/`，改写成「下的配方卡」。
 3. **PowerShell 中文编码**：落盘统一用 `[System.IO.File]::WriteAllText` + UTF8 无 BOM；`Set-Content` / `Out-File` 在中文环境会写 BOM 或 GBK。本项目改用 Node `fs.writeFileSync` 绕过。
 4. **工作区编号**：`03_Video/02_MyWork` 下已有 `01_world-execute-ascii`，故本项目顺延为 `02_cineforge`；桶内编号独立，不与 `01_Github` 对齐。
+5. **HyperFrames check 报告路径**：0.9.88 的 `check` stdout 不一定打印 `Report: <path>`，但报告落在 `.hyperframes/artifacts/checks/<uuid>.json`；`verify-hf.mjs` 已改为按 mtime 取该目录最新 JSON 兜底。
+6. **TMPDIR 为空**：本环境 `os.tmpdir()` 在 run_code 子进程里可能拼成 `undefined/temp`；隔离验证统一放项目 `.local/`（已 gitignore）。
 
 ## 快速理解
 

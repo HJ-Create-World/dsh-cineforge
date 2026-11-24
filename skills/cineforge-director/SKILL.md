@@ -107,6 +107,22 @@ ASSETS → BUILD → SOUND → QA → DELIVER ─[发布确认]→ PUBLISHED
 - 文字糊先查**纹理栅格化链路**（截图倍率 → 栅格化 → 缩放方式），别先调景深或相机（Q2 判例：调 DoF 治标无效）。
 - 为工作台留接口：语境级参数（文案 / 颜色 / 字号 / 位置）做成带默认值的 props + schema；节奏命门保持常量。
 
+### 运行时落地（0.2.0 起，插件已接线）
+
+分镜确认门放行、写出 `project.json`（`cineforge/storyboard/v1`）后，用插件自带的编译器把分镜落成可渲工程，**不要自己手写 HyperFrames HTML**（手写会破坏确定性契约与安全区布局）：
+
+```bash
+# 以插件根为 cwd（技能的 resourceBase 就是插件根）
+node scripts/compile-hf.mjs --project <project.json> --out out/<project_id>
+node scripts/verify-hf.mjs --out out/<project_id>
+```
+
+- `scripts/compile-hf.mjs` 输出 6 文件：`index.html` / `hyperframes.json` / `package.json` / `meta.json` / `project.json` / `manifest.json`。它已固化确定性（禁 `Date.now()` / `Math.random()`、固定种子）、末镜自动补 0.6s 收尾留白（R1/R2）、按平台安全区布局、每镜只讲一个主动效。
+- `scripts/verify-hf.mjs` 必须返回 `ok=true` 才可进阶段 9：它跑 `hyperframes@0.9.88 check`（0 error），按每镜中点抽最多 6 个时间点静帧，产出 `out/qa/<id>.verify.json` 与 contact-sheet 拼图供肉眼复核；warning 只记录不拦截（子组合、示例无音轨属二期）。
+- 阶段 10 渲染（仅在阶段 9 终检放行后）：在 `out/<id>/` 里跑 `npx --yes hyperframes@0.9.88 render --output renders/<id>.mp4 --quality draft --fps 30 --workers 2`，再用 ffprobe 核对 codec / 画幅 / fps / 帧数 / 时长。
+- 一期编译器用 7 个确定性动效原语 + 10 类镜头映射（`lib/hf-primitives.mjs`），**不是 124 卡逐卡精确映射**（那是三期）。某镜若需精确还原某张卡的调校参数，按 `cineforge-cards` 的三读协议读准确 demo TSX 手动增强该镜，不要凭卡名重写。
+- 随时可跑 `node scripts/self-test.mjs`（离线 60 项自检，含两次编译 sha256 一致性）；插件安装 / 状态 / 校验 / 回滚用 `scripts/install-local.mjs`。
+
 ## 阶段 8：声音
 
 - 强节奏 BGM：先做 BPM/相位 + kick/snare/hihat 网格拟合，验收通过后镜头边界锚到拍号。
@@ -141,6 +157,9 @@ ASSETS → BUILD → SOUND → QA → DELIVER ─[发布确认]→ PUBLISHED
 | 锁定画幅与安全区 | `knowledge/platform-presets.json` |
 | 写分镜 JSON | `knowledge/storyboard.schema.json` |
 | 核对上游来源 | `upstream/catalog.json` |
+| 把分镜落成可渲工程 | `scripts/compile-hf.mjs` + `knowledge/storyboard.schema.json` |
+| 静帧验收 / 终检证据 | `scripts/verify-hf.mjs` → `out/qa/<id>.verify.json` + contact-sheet |
+| 自检 / 接线状态 | `scripts/self-test.mjs` / `scripts/install-local.mjs` |
 
 ## 上游署名
 

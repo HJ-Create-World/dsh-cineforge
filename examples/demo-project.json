@@ -1,0 +1,38 @@
+{
+  "schema": "cineforge/storyboard/v1",
+  "project": {
+    "id": "cineforge-demo-01",
+    "idea": "给开源项目 CineForge 做一支 15 秒抖音竖屏预告",
+    "brief": "影铸 · 让普通模型也有 Opus 级设计感",
+    "audience": "独立开发者与 AI 视频创作者",
+    "goal": "让人记住 124 张镜头配方卡与分镜确认门",
+    "platform": "douyin",
+    "aspect": "9:16",
+    "duration_s": 15,
+    "language": "zh-CN",
+    "mode": "autonomous"
+  },
+  "design_spec": {
+    "palette": { "ground": "#0B0E14", "ink": "#F5F1E8", "accent": "#D3923C", "muted": "#8A8F9A", "panel": "#151A24" },
+    "typography": "sans-serif 系统字族，标题 7% 帧宽",
+    "motion_tokens_id": "energetic-bold",
+    "energy_curve": "opening(low) -> function(mid-high) -> breath(low) -> outro(peak)",
+    "styleframe_refs": [],
+    "data_policy": "全部为虚构占位文案，无真实数据"
+  },
+  "shots": [
+    { "id": "s01", "from": 0, "duration_f": 90, "card_id": "brand-ink-open", "card_style_key": "brand-ink-open", "category": "opening", "intent": "纸墨品牌开场", "action": "从深底色里长出品名", "caption": "影铸 CineForge", "transition_in": "fade", "energy": "low", "backend": "hyperframes" },
+    { "id": "s02", "from": 90, "duration_f": 120, "card_id": "blur-slide", "card_style_key": "blur-slide", "category": "typography", "intent": "一句话主张", "action": "主标题模糊滑入落定", "caption": "普通模型，也能有导演级设计感", "transition_in": "slide-up", "energy": "mid-high", "backend": "hyperframes" },
+    { "id": "s03", "from": 210, "duration_f": 120, "card_id": "card-stack", "card_style_key": "card-stack", "category": "ui-entrance", "intent": "展示镜头配方卡", "action": "卡片堆叠错落入场", "caption": "124 张镜头配方卡", "transition_in": "slide-left", "energy": "mid-high", "backend": "hyperframes" },
+    { "id": "s04", "from": 330, "duration_f": 60, "card_id": "beat-cut-moves", "card_style_key": "beat-cut-moves", "category": "rhythm", "intent": "呼吸字卡", "action": "停顿留白", "caption": "先确认分镜，再开机", "transition_in": "fade", "energy": "low", "backend": "hyperframes" },
+    { "id": "s05", "from": 390, "duration_f": 60, "card_id": "outro-group-photo-launch", "card_style_key": "outro-group-photo-launch", "category": "outro", "intent": "品牌收场", "action": "字标锁定 hold 满 1 秒", "caption": "CineForge · 开源", "transition_in": "hidden-cut", "energy": "peak", "backend": "hyperframes" }
+  ],
+  "audio": {
+    "bgm": { "ref": "", "bpm": 0, "phase": 0, "beat_grid": [], "hit_list": [] },
+    "sfx": [], "voiceover": []
+  },
+  "publish": {
+    "platforms": ["douyin"], "title": "", "description": "", "tags": [],
+    "cover": "", "ai_disclosure": { "explicit": false, "implicit": false }, "schedule": ""
+  }
+}

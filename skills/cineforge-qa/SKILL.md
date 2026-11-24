@@ -13,6 +13,18 @@ description: 成片交付前的独立终检。对照 27 条判例式审美准则
 
 成片 + 关键帧抽帧、创意简报、需求决策表、当前模式与视觉方向 / styleframe、功能到镜头映射、Gallery 卡名与变体、准确 demo TSX、Gallery 参考样片抽帧、最终分镜表、选中的镜头卡全文、审美准则。
 
+## 运行时验收（0.2.0 起）
+
+插件接线后，除材料清单外必须核对机器产出的验收证据，不要只看人写的结论：
+
+- `out/qa/<id>.verify.json`：`scripts/verify-hf.mjs` 的报告，`ok=true` 且 lint/runtime/layout/motion/craft 各组 `error=0`、`frames>0`、`empty_frames=0`；warning 只记录、逐条判断是否属已登记的二期项。
+- contact-sheet 拼图与逐帧 png：必须**亲自用 read_image 看**，判断文字可读性、平台安全区留白、镜间变化是否明确；不接受「报告说通过」就算通过。
+- `manifest.json`：核对每镜 `start_s` / `dur_s` / `primitive` / `category` 与分镜表一致，末镜是否补了收尾留白。
+- `index.html`：核对确定性（无 `Date.now` / `Math.random` / 网络请求）、恰好一个 `paused` timeline 注册到 `window.__timelines["main"]`。
+- 渲染成片用 ffprobe 核对 codec / 画幅 / fps / 帧数 / 时长，与分镜契约对照。
+
+一期示例片是「品味层」的占位式样片（字卡 + 网格，无真实产品截图、无复杂光影、无音轨）。终检须如实写明它离「Opus 级设计感」还差什么，不得因 check 0 error 就吹捧视觉质量；`film_silent` 属已知一期缺口，单独列缺陷而非放行理由。发布合规未补齐（AI 显式+隐式双标识、BGM/字体授权、无极限词）时，结论一律「不得进入发布阶段」。
+
 ## 检查维度
 
 | 维度 | 查什么 |

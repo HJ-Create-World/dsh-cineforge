@@ -1,9 +1,9 @@
 {
   "name": "CineForge",
   "cn_name": "影铸 · AI 视频导演台",
-  "version": "0.1.0-design",
+  "version": "0.2.0",
   "type": "dsh-plugin",
-  "status": "design",
+  "status": "runtime",
   "repository": "https://github.com/HJ-Create-World/dsh-cineforge",
   "license": "Apache-2.0",
   "upstream_license": "Apache-2.0",
@@ -30,5 +30,37 @@
   "motion_previews": 150,
   "ecosystem_reviewed": 18,
   "compliance": "AI-generated content explicit and implicit labeling (2025-09-01)",
-  "created": "2026-11-24"
+  "created": "2026-11-24",
+  "runtime": {
+    "entry": "lib/index.js",
+    "skills": [
+      "cineforge-director",
+      "cineforge-cards",
+      "cineforge-qa"
+    ],
+    "health_tool": "cineforge_health",
+    "compiler": "scripts/compile-hf.mjs",
+    "verifier": "scripts/verify-hf.mjs",
+    "self_test": "scripts/self-test.mjs",
+    "installer": "scripts/install-local.mjs",
+    "hyperframes_cli": "0.9.88",
+    "deterministic": true,
+    "demo_render": {
+      "source": "examples/demo-project.json",
+      "output": "out/cineforge-demo-01/renders/cineforge-demo-01.mp4",
+      "codec": "h264",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30,
+      "frames": 468,
+      "duration_s": 15.6,
+      "bytes": 5241170
+    },
+    "verification": {
+      "self_test": "60/60",
+      "install_verify": "27/27",
+      "hf_check": "0 error / 7 warning (subcomposition + film_silent, deferred to phase 2)",
+      "static_frames": "7 snapshots, all non-zero bytes, contact-sheet verified"
+    }
+  }
 }

@@ -1,0 +1,29 @@
+*, *::before, *::after { box-sizing: border-box; }
+:root {
+  --ground: {{GROUND}};
+  --ink: {{INK}};
+  --accent: {{ACCENT}};
+  --muted: {{MUTED}};
+  --panel: {{PANEL}};
+  --pt: {{PT}}px; --pb: {{PB}}px; --pl: {{PL}}px; --pr: {{PR}}px;
+  --title-px: {{TITLE_PX}}px;
+  --sub-px: {{SUB_PX}}px;
+  --small-px: {{SMALL_PX}}px;
+}
+html, body {
+  margin: 0; padding: 0;
+  width: {{WIDTH}}px; height: {{HEIGHT}}px;
+  overflow: hidden; background: var(--ground);
+}
+#root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+.clip { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.shot__bg { position: absolute; inset: 0; opacity: 0.16; background: radial-gradient(circle at 76% 24%, var(--accent), transparent 58%), linear-gradient(155deg, var(--panel), var(--ground) 74%); }
+.shot__grid { position: absolute; inset: 0; opacity: 0.22; background-image: linear-gradient(var(--ink) 1px, transparent 1px), linear-gradient(90deg, var(--ink) 1px, transparent 1px); background-size: 72px 72px; }
+.shot__body { position: relative; z-index: 2; width: 100%; height: 100%; padding: var(--pt) var(--pr) var(--pb) var(--pl); display: flex; flex-direction: column; justify-content: center; }
+.shot__eyebrow { font-family: sans-serif; font-size: var(--small-px); font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; color: var(--accent); margin: 0 0 3.2%; }
+.shot__title { font-family: sans-serif; font-size: var(--title-px); font-weight: 700; line-height: 1.08; letter-spacing: -0.02em; color: var(--ink); margin: 0 0 2.4%; }
+.shot__sub { font-family: sans-serif; font-size: var(--sub-px); font-weight: 400; line-height: 1.5; color: var(--muted); margin: 0 0 4%; max-width: 100%; }
+.shot__foot { font-family: sans-serif; font-size: var(--small-px); letter-spacing: 0.12em; color: var(--muted); opacity: 0.72; margin: 0; }
+.shot__edge { position: absolute; top: var(--pt); right: var(--pr); font-family: sans-serif; font-size: var(--small-px); letter-spacing: 0.16em; color: var(--muted); opacity: 0.6; z-index: 2; }
+.shot__bar { position: absolute; left: var(--pl); bottom: var(--pb); width: 22%; height: 3px; background: var(--ink); opacity: 0.18; z-index: 2; }
+.shot__bar span { display: block; width: 42%; height: 100%; background: var(--accent); }
