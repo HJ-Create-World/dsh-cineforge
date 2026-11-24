@@ -1,0 +1,92 @@
+{
+  "note": "发布端工程预设。竖屏平台对横屏成片会加黑边或裁切，须在分镜阶段就锁定画幅（不可事后补救）。",
+  "platforms": [
+    {
+      "id": "bilibili",
+      "cn": "哔哩哔哩",
+      "aspect": "16:9",
+      "alt_aspect": "9:16 (竖屏专栏)",
+      "max_duration_s": 600,
+      "recommended_s": [
+        60,
+        180
+      ],
+      "cover_required": true,
+      "cover_size": "1146x717",
+      "caption_required": true,
+      "safe_zone": "标题/字幕避开右上角 15% 与底部 12%",
+      "notes": "三连/投币区在底部；封面与标题权重极高；支持分 P 与章节"
+    },
+    {
+      "id": "douyin",
+      "cn": "抖音",
+      "aspect": "9:16",
+      "alt_aspect": null,
+      "max_duration_s": 600,
+      "recommended_s": [
+        15,
+        60
+      ],
+      "cover_required": true,
+      "cover_size": "1080x1920",
+      "caption_required": true,
+      "safe_zone": "底部 20% 与右侧 15% 为交互/文案区，须留白",
+      "notes": "前 3 秒钩子决定完播；硬字幕；建议 AI 生成声明如实评估"
+    },
+    {
+      "id": "xiaohongshu",
+      "cn": "小红书",
+      "aspect": "9:16",
+      "alt_aspect": "3:4",
+      "max_duration_s": 900,
+      "recommended_s": [
+        21,
+        90
+      ],
+      "cover_required": true,
+      "cover_size": "1080x1440",
+      "caption_required": true,
+      "safe_zone": "底部 18%",
+      "notes": "封面文字即标题；口语化文案 + 话题标签"
+    },
+    {
+      "id": "youtube",
+      "cn": "YouTube",
+      "aspect": "16:9",
+      "alt_aspect": "9:16 (Shorts)",
+      "max_duration_s": 43200,
+      "recommended_s": [
+        180,
+        600
+      ],
+      "cover_required": true,
+      "cover_size": "1280x720",
+      "caption_required": false,
+      "safe_zone": "右下角订阅/推荐位",
+      "notes": "Shorts ≤180s；标题 ≤100 字符"
+    },
+    {
+      "id": "shipinhao",
+      "cn": "微信视频号",
+      "aspect": "9:16",
+      "alt_aspect": "16:9",
+      "max_duration_s": 1800,
+      "recommended_s": [
+        30,
+        180
+      ],
+      "cover_required": true,
+      "cover_size": "1080x1260",
+      "caption_required": true,
+      "safe_zone": "底部 20% 与右侧 12%",
+      "notes": "社交推荐链路，标题+话题重要"
+    }
+  ],
+  "common": {
+    "fps": 30,
+    "render_scale": 2,
+    "audio_lufs": -14,
+    "safe_title_px": 120,
+    "deterministic_seed_required": true
+  }
+}

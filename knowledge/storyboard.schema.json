@@ -1,0 +1,21 @@
+{
+  "schema": "cineforge/storyboard/v1",
+  "required": [
+    "project",
+    "design_spec",
+    "shots"
+  ],
+  "fields": {
+    "project": "id, idea, brief, audience, goal, platform, aspect, duration_s, language, mode(co-create|autonomous|template)",
+    "design_spec": "palette, typography, motion_tokens_id, energy_curve, styleframe_refs, data_policy",
+    "shots": "[{ id, from, duration_f, card_id, card_style_key, intent, action, asset_ref, caption, transition_in, transition_out, sfx_cue, beat_anchor, energy, qa_frames:[n,n], backend, props, schema }]",
+    "audio": "bgm{ref,bpm,phase,beat_grid,hit_list}, sfx[], voiceover[]",
+    "publish": "platforms[], title, description, tags[], cover, ai_disclosure, schedule"
+  },
+  "invariants": [
+    "SHOTS 是唯一事实源；字幕表 / SFX 钉帧 / 转场点全部从它派生",
+    "禁 Date.now() / Math.random()，伪随机固定种子",
+    "每镜只讲一个主动效；品牌字标 hold ≥30f；批量动效收尾留 15f 静止",
+    "分镜确认前不得进入最终素材采集"
+  ]
+}

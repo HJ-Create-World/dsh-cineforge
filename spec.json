@@ -1,0 +1,34 @@
+{
+  "name": "CineForge",
+  "cn_name": "影铸 · AI 视频导演台",
+  "version": "0.1.0-design",
+  "type": "dsh-plugin",
+  "status": "design",
+  "repository": "https://github.com/HJ-Create-World/dsh-cineforge",
+  "license": "Apache-2.0",
+  "upstream_license": "Apache-2.0",
+  "goal": "让普通模型驱动的视频创作具备 Opus 级设计感：idea → 文案 → 分镜确认 → 动效 → 高质量成片 → B站/抖音发布",
+  "primary_backend": "hyperframes",
+  "secondary_backend": "remotion (video-shotcraft tuned demos)",
+  "upstream": [
+    {
+      "id": "video-shotcraft",
+      "repo": "https://github.com/Vincentwei1021/video-shotcraft",
+      "license": "Apache-2.0",
+      "pinned_sha": "59f3e9b9e936ff2bce0e18446226d770a3f2f61f",
+      "role": "shot recipe cards / aesthetic rules / motion tokens / workbench / jianying export"
+    },
+    {
+      "id": "hyperframes",
+      "repo": "DSH built-in",
+      "license": "n/a",
+      "role": "primary render + authoring engine"
+    }
+  ],
+  "pipeline_stages": 11,
+  "shot_cards": 124,
+  "motion_previews": 150,
+  "ecosystem_reviewed": 18,
+  "compliance": "AI-generated content explicit and implicit labeling (2025-09-01)",
+  "created": "2026-11-24"
+}

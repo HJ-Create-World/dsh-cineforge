@@ -1,0 +1,36 @@
+CineForge · AI 视频导演台
+Copyright 2026 HJ-Create-World
+
+This product includes software developed from / designed against the following upstream projects.
+See upstream/catalog.json for full provenance, exact pinned revisions, license notices, and the
+ecosystem_review list of evaluated-but-not-bundled projects.
+
+  - video-shotcraft  https://github.com/Vincentwei1021/video-shotcraft  Apache-2.0  (c) Wei Yihao
+  - HyperFrames      DSH built-in (runtime dependency, not vendored)  Apache-2.0
+  - Remotion         https://github.com/remotion-dev/remotion  Remotion License (independent;
+                     NOT distributed by this plugin; enterprise use requires a Company License)
+
+Shot recipe cards, aesthetic rules and motion token tables in knowledge/ are derived from
+video-shotcraft references/ under Apache-2.0; attribution is retained in each derived file.
+Apache-2.0 §4 obligations are met: LICENSE is included, changes are stated, attribution retained.
+
+ATTRIBUTION CHAIN (must be preserved verbatim with the upstream archive; card files themselves
+carry no per-card source labels):
+  - references/shots/ATTRIBUTION.md        38 cards per-card source mapping + legal boundary
+  - assets/audio/ATTRIBUTION.md            BGM (Mixkit Stock Music Free License)
+  - template/public/audio/ATTRIBUTION.md   SFX (Freesound, per-file CC BY)
+  - assets/readme/sponsors/ATTRIBUTION.md  sponsor assets
+Only abstract techniques were referenced; all card text was rewritten, de-branded and
+placeholder-ized. Source records are documentation, NOT a license grant.
+
+Per upstream SKILL.md: finished videos belong to the user, are free for commercial use, and
+do not require attribution to the upstream author.
+
+Projects listed in upstream/catalog.json under ecosystem_review are EVALUATED ONLY and are
+NOT bundled, vendored, or redistributed by this plugin. In particular, MotionHarness is not
+included: no public source was found and its CLI license changed between Apache-2.0,
+UNLICENSED and GPL-3.0-only. Only its design ideas (editable parameter projects, time/region
+annotations, checkpoints/versions) are re-implemented independently.
+
+Generated videos must carry explicit AND implicit AI-generated-content labels under the
+PRC Measures for Labeling AI-Generated Synthetic Content (effective 2025-09-01).

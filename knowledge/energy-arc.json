@@ -1,0 +1,45 @@
+{
+  "schema": "cineforge/energy-arc/v1",
+  "attribution": "Derived from video-shotcraft references/sequences/promo-energy-arc.md by Wei Yihao — Apache-2.0.",
+  "source": "references/sequences/promo-energy-arc.md",
+  "principle": "低能量开场 → 功能段与呼吸位交替 → 高能量收尾（发布会合影推到全片峰值）",
+  "segments": [
+    {
+      "role": "opening",
+      "energy": "low",
+      "note": "单主角 + 完整动作弧，信息宁少而聚焦，开场炫技会压死后面爬升"
+    },
+    {
+      "role": "function_a",
+      "energy": "mid-high",
+      "note": "核心功能展示，一种动画手法只当一次主角"
+    },
+    {
+      "role": "breath",
+      "energy": "low",
+      "note": "字卡呼吸位，落定 hold ≥30f"
+    },
+    {
+      "role": "function_b",
+      "energy": "mid-high",
+      "note": "与 function_a 用不同运动语法，避免同质化"
+    },
+    {
+      "role": "breath",
+      "energy": "low",
+      "note": "第二个呼吸位"
+    },
+    {
+      "role": "outro",
+      "energy": "peak",
+      "note": "全片元素多方向飞入围住字标，默认加码一档；riser→impact→sparkle + 1s hold"
+    }
+  ],
+  "frame_budget": {
+    "brand_hold_min_f": 30,
+    "batch_settle_min_f": 15,
+    "opening_hero_min_s": 3,
+    "full_frame_beats_max": 3
+  },
+  "source_excerpt": "---\nname: promo-energy-arc\n一句话: 全片能量骨架——低开品牌 → 单主角立传 → 字卡呼吸间隔的功能爬升段 → 发布会峰值收场\n适用: 30–60s 多功能 web 产品宣传片的默认全片结构（分镜阶段先填骨架再挑卡）\n段数: 4 段位 + 2–4 张呼吸字卡\n---\n\n## 意图\n\n把散落在 R1–R3/Q5/Q8/P4 的节奏规则合成一条可直接填空的全片曲线。\n模板片成片（1085f）与两次独立复现（各 900f）三次成表均收敛到同一\n骨架——它是默认项，不是令：逐项目可有意识偏离，偏离写进项目 spec。\n\n## 段位表\n\n| 段位 | 时长占比 | 能量 | 职责 | 候选配方卡 |\n|------|----------|------|------|------------|\n| ① 品牌开场 | 8–12%（30s 片）；开场+立传合计可达 20%（模板片） | 低 | 字标压印 + hold ≥1s（R1），交棒产品页面 | brand-ink-open |\n| ② 单主角立传 | 12–15% | 中（质感最高、节奏最慢） | 一个主角、一条完整动作弧 ≥3s（Q5/R3），立出产品原子单位 | spotlight-hero-card（+aesthetic-rules.md Q2 高清 rasterize 技法） |\n| ③ 功能爬升段 | 55–65% | 中高⇄低交替 | 每镜绑一个独特功能、一种手法只当一次主角（P4）；镜与镜之间按需插呼吸字卡 | deck-deal-flyin / type-and-filter / list-stack-press / row-embed / document-typewriter-reveal |\n| ④ 发布会收场 | 13–16% | 峰值（全片最高） | 已展示功能各出代表元素合影围住字标（Q8），sign-off hold ≥1s（R1） | outro-group-photo-launch |\n\n呼吸字卡（paper-title-card）规则：每 1–2 个功能镜头后插一张，单张\n50–55f（≈1.8s），全片 2–4 张；重要功能出场前用作引导字卡（C2）。\n模板片 10 镜里字卡占 4 席，两次复现各 2 席——密度按功能镜头数取。\n\n## 填空流程（替代 ad-hoc 推导）\n\n1. 列产品功能清单（P4），数出功能镜头数 N。\n2. 按段位表分配总帧数：先扣 ①②④ 与字卡的预算，剩余给 ③ 均分。\n   每镜预算内**先划走 hold/rest 帧**（R1 落定 ≥30f、批量收尾 15f，R3）\n   再排动效——不是排完动效再找空隙。\n3. ③ 段能量交替：高能量镜（发牌/堆叠）与稳节奏镜（交互/读字段）\n   间隔排列，信息密度最高的镜头（文"
+}

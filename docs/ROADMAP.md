@@ -1,0 +1,75 @@
+# CineForge 路线图
+
+> 原则：**先让对话内可用，再补工作台，最后接发布闭环。** 每一期都有可独立交付的价值。
+> 调研已定稿，结论见 [RESEARCH-生态调研.md](RESEARCH-生态调研.md)；所有外部来源单一事实源为 `upstream/catalog.json`。
+
+## 一期 · 品味层 + 对话内技能（最快可用）
+
+| 项 | 内容 | 状态 |
+|---|---|---|
+| 上游存档 | `03_Video/01_Github/02_video-shotcraft` 精确快照 + 署名 README + LICENSE | ✅ 已完成 |
+| 上游清单 | `upstream/catalog.json` 单一事实源（含 18 条生态候选 `ecosystem_review` + `compliance` 段） | ✅ 已完成 |
+| 拉取脚本 | `scripts/fetch-upstream.mjs`（API→codeload→tar） | ✅ 已完成 |
+| 品味索引 | 124 卡 / 150 style 的 JSON + MD 索引 | ✅ 已完成 |
+| 审美准则 | 27 条判例式准则结构化 | ✅ 已完成 |
+| 动效 tokens | 6 预设 × 双轴 | ✅ 已完成 |
+| 能量曲线 | 段位表 + 帧预算 | ✅ 已完成 |
+| 平台预设 | 5 平台画幅 / 安全区（抖音底部 20% + 右侧 15% UI 留白） | ✅ 已完成 |
+| 分镜契约 | `storyboard/v1`（含 `publish.ai_disclosure` 显式/隐式双标识） | ✅ 已完成 |
+| 三技能 | director / cards / qa | ✅ 已完成 |
+| 设计文档 | 总纲 / 工作台 / 路线图 / 生态调研 | ✅ 已完成 |
+| 插件市场与生态调研 | 无同名插件、HyperFrames 定位、MotionHarness 判定、发布链路合规 | ✅ 已完成 |
+| 三读协议与署名链 | cards 技能固化三读协议；4 份 ATTRIBUTION 保留；director 加合规硬门 | ✅ 已完成 |
+| **运行时接线** | npm 包骨架（`package.json` 的 dsh 字段 + `cordis.patch.yml`）、`ctx.skills.register`、HyperFrames 编译适配器、静帧验收脚本 | ⬜ 待实现 |
+| **一期补齐（生态结论）** | 双画幅预设 + 安全区、ffmpeg 抽 poster、SRT/硬字幕、whisper.cpp / librosa / subtitle.js / wavesurfer.js / dotLottie-web 接入、AI 标识元数据 | ⬜ 待实现 |
+| **端到端验证** | 用一句 idea 跑通到 MP4 + 终检报告 | ⬜ 待实现 |
+
+**一期验收**：在 DSH 对话里说「给我的 XX 做个 45 秒抖音视频」，技能自动触发 → 分镜确认 → 输出 MP4 + 终检报告。
+
+**插件落地形态（已实测）**：DSH 插件 = npm 包，声明全在 `package.json` 的 `dsh` 字段，靠 `cordis.patch.yml` 的 `- insert:` 行加载；能力用 `ctx.skills.register` / `ctx.tools` 注册；Web UI 另用 `exports["./client"]` + `ctx.slots.inject`。客户端 HMR 走 `/plugins/events` SSE（需 `pnpm run dev:web` + watcher，Electron 不走此路）。安装：`dsh plugin --profile desktop add <spec>`。
+
+## 二期 · 独立视频创作工作台
+
+- [ ] **A 方案（推荐）**：DSH 原生侧栏面板 `ctx.slots.inject("sidebar.panellist", …)` + `ctx.slots.inject("main", …)`，实证 `PF/node_modules/dsh-hyperframes/lib/client.js:137,2528-2529`
+- [ ] B 方案（备选）：iframe 页 `ctx.sidebarRight.openTab("browser", {params:{url}})`
+- [ ] C 方案（二期后）：独立本地页 + 本地服务，**不另起替代 DSH Web GUI 的服务器**
+- [ ] `project.json` 双向同步（对话 ↔ 工作台）
+- [ ] 四面板：A Idea / B 分镜板主舞台 / C 镜头库 / D 底部条（含 AI 标识确认）
+- [ ] 分镜卡拖拽重排、时长拉伸、能量曲线可视化
+- [ ] 镜头库动态预览接入上游 gallery media
+- [ ] 确认门的硬约束（未放行不可渲染）
+- [ ] 静帧验收墙 + 终检报告可视化
+- [ ] **借鉴 MotionHarness 自研**：可编辑参数工程 + 时间/区域批注 + checkpoint/版本（不复制不捆绑其代码）
+- [ ] 可选：链接上游 Motion Workbench 做成片后多轨微调
+
+## 三期 · 发布闭环与映射表
+
+- [ ] 124 张卡 → HyperFrames registry block / keyframes 的自动映射表（工作量最大、收益最高）
+- [ ] 剪映工程导出适配（上游 `jianying-export/` 按平台模块复用）
+- [ ] B 站投稿适配器 `biliup`（MIT，用户自装，dry-run + 显式确认 + requestId 幂等）；抖音只给手动上传指引（OpenAPI 需机构认证）
+- [ ] 平台尺寸封面自动生成（ffmpeg -ss 抽最强定格帧）
+- [ ] 竖屏 / 横屏双版本一次分镜两次渲染（重构图，非拉伸）
+- [ ] 配音 / 口播链路（可参考上游姊妹项目 video-talkcraft）
+- [ ] ⏳ MotionHarness 外部适配器：仅用户自装且等其许可稳定（CLI 许可 Apache→UNLICENSED→GPL-3.0 反复、无公开源码）
+
+## 发布合规（硬约束，三期发布闭环必须落地）
+
+《AI 生成合成内容标识办法》2025-09-01 施行，须**显式 + 隐式双标识**；阶段 10 确认弹窗「AI 双标识未勾全不得提交」。另需 BGM/字体商用授权台账、广告法极限词检查、内容审核（《网络短视频内容审核标准细则》）、数据安全（无客户/个人/内部/密钥/实时数据）。完整 URL 见 [RESEARCH-生态调研.md](RESEARCH-生态调研.md) §4 与 `upstream/catalog.json` 的 `compliance` 段。
+
+## 状态说明（原「待用户拍板」已随本次工作推进）
+
+1. **插件名与 GitHub 仓库名** → 已定为 `CineForge 影铸` / [`HJ-Create-World/dsh-cineforge`](https://github.com/HJ-Create-World/dsh-cineforge)（公开仓库已创建）。如要改名请告知。
+2. **公开 / 私有** → 已按 m00001「你可以在 github 上创建新的仓库」建为 **public**。
+3. **一期先做「对话内技能」还是先做「独立工作台」** → 本路线图按「先对话内技能」编排；仍待用户确认。
+4. **是否投入做 124 卡 → HF 的自动映射表** → 编排在三期，仍待用户确认。
+
+## 生态候选（已调研定稿）
+
+见 [RESEARCH-生态调研.md](RESEARCH-生态调研.md) 与 `upstream/catalog.json` 的 `ecosystem_review`（18 条，全部 `bundled:false`）。判定摘要：
+
+- **一期纳入**：HyperFrames（唯一渲染运行时）+ video-shotcraft（配方卡/分镜方法）+ dotLottie-web / subtitle.js / whisper.cpp / librosa / wavesurfer.js（MIT/BSD/ISC）+ GSAP（确认免费条款后沿用）+ biliup（用户自装）。
+- **暂缓**：Remotion（自定 License、企业需 Company License，与 HF 二选一勿并存）、Manim、抖音 OpenAPI、Motion Canvas / Revideo。
+- **不引入**：Reactive Video / audioMotion-analyzer（GPL/AGPL 传染）、Framer Motion（GSAP 已覆盖）。
+- **只借鉴、不捆绑**：MotionHarness「可编辑参数工程 + 时间/区域批注 + checkpoint/版本」设计。
+
+任何新上游**必须先登记 `upstream/catalog.json` 再引入**，并记录精确 SHA 与 License。

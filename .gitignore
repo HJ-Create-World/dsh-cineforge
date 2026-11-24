@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.venv/
+__pycache__/
+out/jobs/
+out/*.mp4
+out/qa/
+*.blend1
+.DS_Store
+upstream/_cache/
+upstream/_extract/
+*.tar.gz
+workbench/.dev.pid
+workbench/.public-copies.json
+src/workbench/proj
+src/workbench/public/_linked/
+
+# gh CLI / 本地工具状态，不入库
+.local/

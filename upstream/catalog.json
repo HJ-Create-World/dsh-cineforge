@@ -1,0 +1,214 @@
+{
+  "schema": 1,
+  "note": "所有外部来源的单一事实源。每个条目记录精确版本、许可、引入方式与用途；新增动效项目必须先登记于此。ecosystem_review 为「已调研但未引入」的候选，一律 status=evaluated_only / bundled=false，不得视为已引入。",
+  "entries": [
+    {
+      "id": "video-shotcraft",
+      "name": "video-shotcraft",
+      "url": "https://github.com/Vincentwei1021/video-shotcraft",
+      "author": "Wei Yihao (Vincentwei1021)",
+      "license": "Apache-2.0",
+      "license_file": "LICENSE",
+      "pinned_sha": "59f3e9b9e936ff2bce0e18446226d770a3f2f61f",
+      "fetched_at": "2026-11-24",
+      "fetch_method": "GitHub API commit SHA -> codeload.github.com tar.gz -> local extract",
+      "local_archive": "03_Video/01_Github/02_video-shotcraft",
+      "consumed": [
+        "references/shots/*.md (124 cards)",
+        "references/aesthetic-rules.md",
+        "references/pipeline.md",
+        "references/sequences/promo-energy-arc.md",
+        "gallery/api/library.json",
+        "demos/** (150 TSX)",
+        "assets/lib/**",
+        "template/**",
+        "workbench/**",
+        "jianying-export/**",
+        "publish/**"
+      ],
+      "role": "动效词汇库、审美判例、制作流水线、成片模板、动效工作台、剪映导出、社交发布",
+      "keep_attribution": true,
+      "license_notes": "Apache-2.0 全文、无 NOTICE；§4 须附 License / 改动声明 / 保留署名。卡片仅参考公开作品的抽象手法并全部重写、去品牌化、占位化；来源记录不是授权凭证。成片归用户、免费商用、不强制署名（上游 SKILL.md）。Remotion 为独立自定许可，本插件不分发 Remotion。",
+      "attribution_chain": [
+        "references/shots/ATTRIBUTION.md —— 38 张卡逐卡来源映射 + 法律边界；卡片自身不带来源标注",
+        "assets/audio/ATTRIBUTION.md —— BGM，Mixkit Stock Music Free License 免署名可商用",
+        "template/public/audio/ATTRIBUTION.md —— 模板 SFX，Freesound 逐文件 CC BY",
+        "assets/readme/sponsors/ATTRIBUTION.md —— 赞助商素材"
+      ],
+      "three_read_protocol": "校验「卡名·样式名」→ 读 references/shots/*.md 配方卡 → 按 reference_impl 读 demos/** 的准确 TSX（参数真相在 demo，不在卡片文字）→ copy assets/lib/**。依据上游 SKILL.md:146 / references/pipeline.md:211 / references/final-review.md S2，gen-index.mjs 亦消费同一套。卡上「已知坑 / 命门」参数不得降档。",
+      "load_mechanism": "上游是 Claude Code / Codex 技能：SKILL.md frontmatter 仅 name+description，渐进披露 = 触发 → 9 理念 + 路由表 → 按需 references/ → 卡/demo；.claude-plugin/plugin.json 的 skills:\"./\" 指向根；agents/openai.yaml 供 Codex harness 读。DSH 侧须改为 ctx.skills.register + 工具契约，专有部分（plugin.json / openai.yaml / 安装路径 / subagent 终检）须重写。"
+    },
+    {
+      "id": "hyperframes",
+      "name": "HyperFrames",
+      "url": "DSH built-in (dsh-hyperframes 0.14.1)",
+      "license": "Apache-2.0",
+      "role": "主渲染引擎与编排契约（不 vendor，运行时依赖）"
+    },
+    {
+      "id": "remotion",
+      "name": "Remotion",
+      "url": "https://github.com/remotion-dev/remotion",
+      "license": "Remotion License (个人 / ≤3 人免费；企业需 Company License)",
+      "role": "可选渲染后端，仅用于复刻 video-shotcraft 调校过的 TSX 镜头；不分发"
+    }
+  ],
+  "ecosystem_review": [
+    {
+      "id": "motionharness",
+      "name": "MotionHarness 帧驭",
+      "url": "https://motionharness.top/home",
+      "license": "CLI: 0.0.11-0.0.25 Apache-2.0 → 0.0.26-0.1.7 UNLICENSED → 0.1.8 GPL-3.0-only；SDK 0.1.8 MIT",
+      "status": "evaluated_only",
+      "bundled": false,
+      "verdict": "产品真实（npm @motionharness/cli / sdk v0.1.8、B站 BV1uUW36kEpC），但 GitHub 组织 MotionHarness public_repos=0、npm 声明仓库与早期 VibeMG 均 404，查无公开源码。只借鉴「可编辑参数工程 + 时间/区域批注 + checkpoint/版本」设计自研，❌ 不复制不捆绑代码；未来外部适配器须用户自装且等许可稳定。勿把同名 0★ 空仓当本体。"
+    },
+    {
+      "id": "dotlottie-web",
+      "name": "dotLottie-web",
+      "license": "MIT",
+      "status": "planned_phase1",
+      "bundled": false,
+      "verdict": "互补资产层，HF 已有 Lottie adapter，一期纳入"
+    },
+    {
+      "id": "subtitle-js",
+      "name": "gsantiago/subtitle.js",
+      "license": "MIT",
+      "status": "planned_phase1",
+      "bundled": false,
+      "verdict": "SRT/VTT 解析 + 硬字幕烧录链路，一期纳入"
+    },
+    {
+      "id": "whisper-cpp",
+      "name": "ggml-org/whisper.cpp",
+      "license": "MIT",
+      "status": "planned_phase1",
+      "bundled": false,
+      "verdict": "ASR → SRT，补齐 HF 不提供的字幕转写，一期纳入"
+    },
+    {
+      "id": "librosa",
+      "name": "librosa",
+      "license": "ISC",
+      "status": "planned_phase1",
+      "bundled": false,
+      "verdict": "BPM/beat grid 拟合（上游同款），一期纳入；避开 GPL 的 aubio"
+    },
+    {
+      "id": "wavesurfer-js",
+      "name": "wavesurfer.js",
+      "license": "BSD-3-Clause",
+      "status": "planned_phase1",
+      "bundled": false,
+      "verdict": "波形/音频可视化，一期纳入；避开 AGPL 的 audioMotion-analyzer"
+    },
+    {
+      "id": "gsap",
+      "name": "GSAP",
+      "license": "Standard License（2025 Webflow 收购后 100% 免费，非 OSI）",
+      "status": "evaluated_only",
+      "bundled": false,
+      "verdict": "已是 HyperFrames 默认动画引擎，确认免费条款后沿用，不重复引入"
+    },
+    {
+      "id": "biliup",
+      "name": "biliup/biliup",
+      "license": "MIT",
+      "status": "planned_user_installed",
+      "bundled": false,
+      "verdict": "B 站投稿适配器，仅用户自装，dry-run + 显式确认 + requestId 幂等"
+    },
+    {
+      "id": "remotion-runtime",
+      "name": "Remotion 作为运行时",
+      "license": "自定",
+      "status": "deferred",
+      "bundled": false,
+      "verdict": "与 HyperFrames 二选一勿并存；企业需 Company License，自动化渲染 $0.01/次 $100/月起。暂缓"
+    },
+    {
+      "id": "manim",
+      "name": "Manim",
+      "license": "MIT",
+      "status": "deferred",
+      "bundled": false,
+      "verdict": "数学科普垂类，渲成 footage 再合成，重叠低，垂类再说"
+    },
+    {
+      "id": "douyin-openapi",
+      "name": "抖音开放平台内容发布 API",
+      "license": "平台条款",
+      "status": "deferred",
+      "bundled": false,
+      "verdict": "需机构认证 / 权限申请，个人开发者受限；一期只给手动上传指引"
+    },
+    {
+      "id": "motion-canvas",
+      "name": "Motion Canvas",
+      "license": "MIT",
+      "status": "deferred",
+      "bundled": false,
+      "verdict": "第三运行时，与 HF 重叠高，暂缓"
+    },
+    {
+      "id": "revideo",
+      "name": "midrender/revideo",
+      "license": "MIT",
+      "status": "deferred",
+      "bundled": false,
+      "verdict": "基于 Motion Canvas，末次提交 2026-07 维护放缓，重叠高，暂缓"
+    },
+    {
+      "id": "reactive-video",
+      "name": "mifi/reactive-video",
+      "license": "GPL-3.0",
+      "status": "rejected",
+      "bundled": false,
+      "verdict": "传染性许可 + 低活跃，仅观察"
+    },
+    {
+      "id": "framer-motion",
+      "name": "Motion (原 Framer Motion)",
+      "license": "MIT",
+      "status": "rejected",
+      "bundled": false,
+      "verdict": "仅 DOM 动画、非渲染器，GSAP 已覆盖"
+    },
+    {
+      "id": "audiomotion-analyzer",
+      "name": "audioMotion-analyzer",
+      "license": "AGPL-3.0",
+      "status": "rejected",
+      "bundled": false,
+      "verdict": "AGPL 慎用，改自研 Web Audio"
+    },
+    {
+      "id": "video-shotcraft-dsh",
+      "name": "kingselyjoe/video-shotcraft-dsh",
+      "license": "Apache-2.0",
+      "status": "reference_only",
+      "bundled": false,
+      "verdict": "已有 DSH 侧移植尝试，值得读但吸收方法而非另起；CineForge 差异化是引擎无关品味层 + 11 阶段状态机 + 独立终检 + 合规闭环"
+    },
+    {
+      "id": "dsh-video-storyboard",
+      "name": "SAOS-3624/dsh-video-storyboard",
+      "license": "Apache-2.0",
+      "status": "reference_only",
+      "bundled": false,
+      "verdict": "偏分镜产出物，非导演方法论，参考"
+    }
+  ],
+  "compliance": {
+    "regulation": "《AI 生成合成内容标识办法》2025-09-01 施行（https://www.cac.gov.cn/2025-03/14/c_1743654684782215.htm）",
+    "requires": [
+      "显式标识（平台 AI 声明 + 画面/描述标注）",
+      "隐式标识（MP4 元数据/水印字段）",
+      "BGM 与字体商用授权台账",
+      "广告法极限词检查",
+      "数据安全（无客户/个人/内部/密钥/实时数据）"
+    ],
+    "gate": "阶段 10 发布确认弹窗硬门：AI 双标识未勾全不得提交；发布命令只触发一次，超时或 status: unknown 绝不重跑"
+  }
+}
