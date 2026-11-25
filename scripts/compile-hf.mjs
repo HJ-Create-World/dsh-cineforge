@@ -429,7 +429,7 @@ function compile(sb, opts) {
   const legalHits = screenText.match(/导演级|Opus|最优|第一|免费商用|绝对|100%|顶级|最好/g) || [];
   const manifest = {
     schema: "cineforge/hf-manifest/v2",
-    compiler_version: "0.4.1",
+    compiler_version: "0.4.2",
     project_id: sb.project.id,
     platform: canvas.platform, aspect: canvas.aspect,
     width: canvas.width, height: canvas.height, fps: canvas.fps,
@@ -482,7 +482,7 @@ function compile(sb, opts) {
   };
   const aigcMeta = {
     schema: "cineforge/aigc/v1",
-    generator: "CineForge / dsh-cineforge 0.4.1",
+    generator: "CineForge / dsh-cineforge 0.4.2",
     upstream: "https://github.com/Vincentwei1021/video-shotcraft",
     upstream_license: "Apache-2.0",
     label: AIGC_LABEL,

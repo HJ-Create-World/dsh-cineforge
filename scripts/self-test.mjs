@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// CineForge · 离线自检（零依赖、零网络、零 CLI） v0.4.1（含 Cordis Proxy 回归 + 参考片分析 + 工作台能动）
+// CineForge · 离线自检（零依赖、零网络、零 CLI） v0.4.2（含 Cordis Proxy 回归 + 参考片分析 + 工作台能动 + 收口验收）
 // 用法：node scripts/self-test.mjs
 // 校验：插件清单 / 补丁 / 3 技能 frontmatter 与注册 / health 工具 / 知识库 JSON / 卡库 /
 //       编译确定性（8 文件 + 复制资产）/ v2 manifest 契约 / 音频与 AIGC / 单一事实源。
@@ -58,7 +58,7 @@ async function main() {
   check("engines.dsh", pkg.engines && pkg.engines.dsh === ">=0.2.2-rc.3");
   check("license Apache-2.0", pkg.license === "Apache-2.0");
   // v0.4.0 工作台：客户端半身与槽位契约（依据 dsh-config-sync-plugin/client.js 头注释）
-  check("package.json version 0.4.1", pkg.version === "0.4.1", pkg.version);
+  check("package.json version 0.4.2", pkg.version === "0.4.2", pkg.version);
   check("exports[\"./client\"]", pkg.exports && pkg.exports["./client"] === "./lib/client.js");
   check("dsh.client web", pkg.dsh && pkg.dsh.client && pkg.dsh.client.platform === "web");
   check("dsh.client.inject 为字符串数组", Array.isArray(pkg.dsh.client.inject) && pkg.dsh.client.inject.every((x) => typeof x === "string"));
@@ -324,12 +324,59 @@ async function main() {
   check("routes 导出 animatic/lint/gate", rt.indexOf("postAnimatic") >= 0 && rt.indexOf("postLint") >= 0 && rt.indexOf("postGate") >= 0);
   const svc = readFileSync(join(ROOT, "lib", "server", "workbench-service.mjs"), "utf8");
   check("service 注册三条新路由", svc.indexOf('"/animatic"') >= 0 && svc.indexOf('"/lint"') >= 0 && svc.indexOf('"/gate"') >= 0);
-  check("compile 版本号 0.4.1", readFileSync(join(ROOT, "scripts", "compile-hf.mjs"), "utf8").indexOf('compiler_version: "0.4.1"') >= 0);
+  check("compile 版本号 0.4.2", readFileSync(join(ROOT, "scripts", "compile-hf.mjs"), "utf8").indexOf('compiler_version: "0.4.2"') >= 0);
   // CLI 的 --animatic 通道（不真跑 ffmpeg，只验参数解析与接线存在）
   const cph = readFileSync(join(ROOT, "scripts", "compile-hf.mjs"), "utf8");
   check("compile CLI 支持 --animatic", cph.indexOf('"--animatic"') >= 0 && cph.indexOf("buildAnimatic") >= 0);
   check("client C 区有区块头", cl.indexOf("C · 资源库") >= 0);
   check("client 保存串行化", cl.indexOf("savingRef") >= 0 && cl.indexOf("againRef") >= 0);
+
+  // ── v0.4.2 收口：verify 读取 / 发布预检 / 发布回执 / 客户端验收墙 ────────
+  const { frameTime, normalizeVerify } = await import("../lib/verify-read.mjs");
+  const { publishPreflight, buildPublishReceipt, buildAigcSidecar, LEGAL_WORDS, PLATFORM_ASPECT } = await import("../lib/publish.mjs");
+  check("frameTime 读整数秒", frameTime("frame-02-at-8s.png") === 8);
+  check("frameTime 读小数秒", Math.abs(frameTime("frame-00-at-1.5s.png") - 1.5) < 1e-9);
+  check("frameTime 非帧文件返回 null", frameTime("contact-sheet.jpg") === null);
+  const nv = normalizeVerify({
+    ok: true, error_count: 0, warning_count: 1, empty_frames: 0, sample_times: [1.5],
+    groups: { lint: { error: 0, warning: 1, info: 0 }, craft: { error: 0, warning: 0, info: 0 } },
+    warnings: [{ group: "lint", code: "x", message: "m", fix: "f" }],
+    frames: [{ path: "D:/a/frame-00-at-1.5s.png", bytes: 10 }],
+    contact_sheet: true
+  }, () => ({ src: "pluginout", id: "f.png", url: "/u" }));
+  check("normalizeVerify 帧按时间排序", nv.frames.length === 1 && nv.frames[0].t === 1.5);
+  check("normalizeVerify 分组计数", nv.groups && Object.keys(nv.groups).length === 2 && nv.groups.lint.warning === 1, JSON.stringify(nv.groups));
+  check("normalizeVerify 保留 warnings fix", nv.warnings[0].fix === "f");
+  const pubBase = {
+    project: { id: "t", platform: "douyin", aspect: "9:16", brief: "b", idea: "i" },
+    publish: { platforms: ["douyin"], title: "标题", description: "描述", tags: ["a"], cover: "", ai_disclosure: { explicit: true, implicit: true } },
+    shots: [{ copy: { title: "纯文字标题", sub: "副标题", foot: "" } }]
+  };
+  const pf0 = publishPreflight({ project: pubBase, verify: { found: true, ok: true, error_count: 0, empty_frames: 0 }, pluginRoot: ROOT, projectDir: ROOT });
+  check("preflight 九项齐全", pf0.items.length === 9, String(pf0.items.length));
+  check("preflight block 六条", pf0.counts.blocking === 6, JSON.stringify(pf0.counts));
+  check("preflight 文案齐全可过", pf0.items.find((i) => i.id === "copy").status === "pass");
+  check("preflight 缺封面只 warn", pf0.items.find((i) => i.id === "cover").severity === "warn");
+  const pfLegal = publishPreflight({ project: Object.assign({}, pubBase, { shots: [{ copy: { title: "全网第一的导演级方案", sub: "", foot: "" } }] }), verify: { found: true, ok: true, error_count: 0, empty_frames: 0 }, pluginRoot: ROOT, projectDir: ROOT });
+  check("preflight 极限词阻断", pfLegal.items.find((i) => i.id === "legal").status === "fail" && pfLegal.ok === false);
+  check("LEGAL_WORDS 含 导演级/第一", LEGAL_WORDS.indexOf("导演级") >= 0 && LEGAL_WORDS.indexOf("第一") >= 0);
+  const pfPriv = publishPreflight({ project: Object.assign({}, pubBase, { shots: [{ copy: { title: "联系 13800138000", sub: "", foot: "" } }] }), verify: { found: true, ok: true, error_count: 0, empty_frames: 0 }, pluginRoot: ROOT, projectDir: ROOT });
+  check("preflight 手机号阻断", pfPriv.items.find((i) => i.id === "privacy").status === "fail");
+  const pfNoVerify = publishPreflight({ project: pubBase, verify: { found: false }, pluginRoot: ROOT, projectDir: ROOT });
+  check("preflight 无终检阻断", pfNoVerify.items.find((i) => i.id === "verify").status === "todo" && pfNoVerify.ok === false);
+  check("PLATFORM_ASPECT 抖音竖屏", PLATFORM_ASPECT.douyin === "9:16" && PLATFORM_ASPECT.bilibili === "16:9");
+  const rc = buildPublishReceipt({ project: pubBase, preflight: pf0, operator: "tester", platform: "douyin", note: "n", at: "2026-01-01T00:00:00.000Z" });
+  check("回执 schema 与手动上传标记", rc.schema === "cineforge/publish-receipt/v1" && rc.upload === "manual" && rc.preflight.counts.total === 9);
+  const side = buildAigcSidecar({ project: pubBase, pluginVersion: "0.4.2", at: "2026-01-01T00:00:00.000Z" });
+  check("AIGC sidecar 标注上游", side.schema === "cineforge/aigc/v1" && side.upstream.indexOf("video-shotcraft") >= 0 && side.upstream_license === "Apache-2.0");
+  check("client 静帧验收墙", cl.indexOf("function VerifyWall") >= 0 && cl.indexOf("cfw-frames") >= 0);
+  check("client 发布弹窗九项", cl.indexOf("function PublishDialog") >= 0 && cl.indexOf("cfw-pf-item") >= 0 && cl.indexOf("onRecord") >= 0);
+  check("client 只读锁定", cl.indexOf("const locked = readOnly") >= 0 && cl.indexOf("分镜已锁") >= 0);
+  check("client 未保存拦截", cl.indexOf("beforeunload") >= 0 && cl.indexOf("还有改动没保存完") >= 0);
+  check("routes 导出 verify/preflight/record", rt.indexOf("getVerify") >= 0 && rt.indexOf("getPreflight") >= 0 && rt.indexOf("postPublishRecord") >= 0);
+  check("service 注册收口三路由", svc.indexOf('"/verify"') >= 0 && svc.indexOf('"/publish/preflight"') >= 0 && svc.indexOf('"/publish/record"') >= 0);
+  check("compile 版本号 0.4.2", readFileSync(join(ROOT, "scripts", "compile-hf.mjs"), "utf8").indexOf('compiler_version: "0.4.2"') >= 0);
+  check("package.json 0.4.2", readJson(join(ROOT, "package.json")).version === "0.4.2");
 
   const failed = results.filter((r) => !r.ok);
   const summary = {
@@ -337,7 +384,7 @@ async function main() {
     schema: "cineforge/self-test/v1",
     plugin: pluginName,
     inject,
-    version: "0.4.1",
+    version: "0.4.2",
     total: results.length,
     passed: results.length - failed.length,
     failed,

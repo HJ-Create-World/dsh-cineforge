@@ -7,7 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-（0.4.2 及之后）
+（0.5.0 及之后）
+
+## [0.4.2] - 2026-11-25
+
+`feat(workbench)`: 收口 —— 静帧验收墙、发布前九项检查与发布回执、未保存拦截、只读锁定、降级占位全部接通；自检 156 → **181/181**。无新增运行时依赖。
+
+### Added — 静帧验收墙（读真实 verify.json）
+
+- **`lib/verify-read.mjs`（新）**：`readVerify()` 依次找 `<工程>/qa/<id>.verify.json` → `<工程>/out/qa/` → `<插件>/out/qa/`；`frameTime()` 从 `frame-02-at-8s.png` 这类文件名读出秒数（整数秒与小数秒都要吃得下）；`normalizeVerify()` 归一成界面可直接渲染的结构（帧按时间排序、八组计数、warnings 带 fix）。
+- **`GET /dsh-cineforge/verify`**：把报告里的**绝对路径**换成 `/dsh-cineforge/asset?src=pluginout|workspace&id=…`，前端不需要知道文件在哪；找不到报告返回 200 + `found:false` + 找过的位置 + 生成命令，不报 404。
+- **`VerifyWall`**：contact-sheet 大图 + 逐帧缩略（点某帧 → 关闭墙并跳到覆盖该时刻的镜卡）+ 八组 error/warning 计数 + 明细（最多 30 条，含「修：」）。
+- 底栏「静帧」计数改为读 verify 报告（此前写死 `—`）；报告不 ok 时数字标红。
+
+### Added — 发布前检查与回执
+
+- **`lib/publish.mjs`（新，10.6 KB，零依赖）**：`publishPreflight()` 出**九项**检查 —— 六项 `block`（AI 显式标识 / AI 隐式标识 / 文案齐全 / 极限词 / 数据安全 / 静帧验收）+ 三项 `warn`（封面 / 音频署名 / 画幅与平台）。任一条 block 未过 `ok:false`。
+- 极限词表与 `compile-hf.mjs` 的 `legal_word_check` **同一张表**（导演级 / Opus / 最优 / 第一 / 免费商用 / 绝对 / 100% / 顶级 / 最好），不允许两处各写一份；数据安全扫手机号 / 邮箱 / 密钥 / 证件号 / 卡号。
+- **`GET /dsh-cineforge/publish/preflight`**：服务端重算，**绝不信客户端传的 passed**。
+- **`POST /dsh-cineforge/publish/record`**：preflight 未过且没有 `force:true` → 409 `PREFLIGHT_BLOCKED`（附完整九项）；通过则写 `<工程>/publish/aigc-metadata.json`（AIGC 隐式标识 sidecar）并把回执压进 `project.publish_receipts`（保留最近 20 条），走 rev CAS。
+- **`PublishDialog`**：九项逐条显示「通过 / 阻断 / 待办 + 必过或提醒 + 怎么改」，必须勾「我已逐条看过」才能记录回执；回执明确写 `upload:'manual'` —— 一期**不内置上传**，原因是 biliup 属用户自装适配器、抖音 OpenAPI 需机构认证。
+
+### Added — 状态与安全
+
+- **未保存拦截**：脏状态下挂 `beforeunload`；点「返回对话」若仍有改动先 `window.confirm`。
+- **只读锁定**：`locked = readOnly || (放行 && stage>storyboard)`。锁定后分镜卡不可拖、右边缘把手消失、镜头库条目不可拖入，提示改「已放行 · 分镜已锁」——要改先撤回放行，与服务端 lint 同一条规矩。
+- **降级占位**：没有 verify 报告、没有 animatic、没有封面时只显示占位与生成命令，不报错、不留白屏。
+
+### Changed
+
+- `package.json`：version `0.4.1` → **`0.4.2`**。
+- `scripts/compile-hf.mjs`：`compiler_version` 与 aigc `generator` `0.4.1` → `0.4.2`。
+- `lib/server/routes.mjs` / `workbench-service.mjs`：端点表 11 → **14** 条。
+- `lib/client.js`：77.7 KB → **88.3 KB**；新增样式全部走 `.cfw` 主题 token。
+
+### Fixed
+
+- `normalizeVerify` 此前把「算不出 URL 的帧」整条丢掉，导致发布检查里报「0 张静帧」——现在保留帧记录、只留空 url。
+- `audioLicenses` 找 `assets/audio/ATTRIBUTION.md`（不存在），实际署名在 `bgm/` 与 `sfx/` 两个子目录 —— 改为三处都查。
+
+### Verified
+
+- `node scripts/self-test.mjs` → **ok true / total 181 / passed 181 / failed 0**。
+- 真实 HTTP（同源 `Origin` 头）：`/verify?name=03_cineforge-demo-01` 200，7 张静帧 + contact-sheet 的 URL 全部可拼出；`/publish/preflight` 对 demo 工程 `ok:false`（3 项 block 未过：AI 双标识、文案），对补全后的 `04_cineforge-publish-test` `ok:true`（8 pass / 1 todo）；`/publish/record` 未过时 409 `PREFLIGHT_BLOCKED`，通过时 200 + rev 1→2 + `publish/aigc-metadata.json` 落盘。
+- 客户端 bundle `plugins/??dsh-cineforge/client.js&rev=a2e9fd48e126` 88276 B，`VerifyWall / PublishDialog / cfw-pf-item / beforeunload / publish/preflight / publish/record / 静帧验收 / 发布检查` 全部命中。
 
 ## [0.4.1] - 2026-11-25
 

@@ -1,6 +1,6 @@
 {
   "name": "dsh-cineforge",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "CineForge 影铸 · AI 视频导演台 —— DSH 视频创作增强版插件。把一句 idea 扩写成文案、分镜与动效映射，编译成 HyperFrames 成片，并自带独立工作台面板（侧栏「影铸工作台」）。上游 video-shotcraft (Apache-2.0)。",
   "type": "module",
   "main": "./lib/index.js",
