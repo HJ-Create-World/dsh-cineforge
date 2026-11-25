@@ -25,6 +25,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `275e10b` — `docs(qa)`: archived the independent final review of the 0.2.0 demo film. Verdict: rework (27 rules: ✓7 / ✗14 / N/A6); P0 `publish.ai_disclosure` explicit + implicit both false; **NOT FOR PUBLISH**. The demo is a phase-1 placeholder sample, not a publishable film.
 
+## [0.4.0] - 2026-11-25
+
+`feat(workbench)`: 工作台骨架（A 阶段）+ 参考片分析转正（C 阶段）。插件从「只有对话内技能」升级为「技能 + 侧栏工作台面板」，并新增两条零依赖 CLI。无新增运行时依赖。
+
+### Added — 参考片分析（C 阶段，已转正为 lib/）
+
+- **`lib/ffmpeg.mjs`** — ffmpeg 定位与探测：`resolveFfmpeg(env)` 按 `CINEFORGE_FFMPEG` → PATH → 已知安装目录（winget Gyan / C:/ffmpeg / Program Files / chocolatey）依次探测，返回 `{ffmpeg, ffprobe, source, tried}`；`run()` 二进制安全、maxBuffer 512MB；`probeMedia()` 出 width/height/fps/duration_s/has_audio/video_codec/audio_codec/size_bytes/format_name。
+- **`lib/reference-analysis.mjs`** — 参考片结构分析：`segment()` 用**自研帧差法**（fps 4 / 宽 48 / 灰度，阈值 `max(mean*2.0, 5)`，0.5s 内合并，片头 0.25s 护栏）；`keyframes()` 每镜取 15%/50%/85% 三帧；`contactSheet()` 每镜中点帧 + drawtext 标号 + hstack；`shotStats()` 逐镜出 luma / dark_ratio / motion / kind(`dark`|`paper`|`mixed`)。
+  - 文件头记录的关键教训：**ffmpeg 官方 `scdet` 与 `select=gt(scene,…)` 在本机测试片上 0 命中，阈值降到 0.08 仍 0 命中**，必须自研。
+- **`lib/style-fingerprint.mjs`** — 风格指纹（schema `cineforge/style-fingerprint/v3`）：调色板（k=6 + 占比）、明暗分布、运动能量（p50/p90/p99 + static_ratio）、节奏（BPM）。BPM 用**谐波求和自相关** `score(L)=acAt(L)+0.8·acAt(2L)+0.6·acAt(3L)+0.4·acAt(4L)`，输出 `bpm_est` 与 `bpm_top` 候选；`bpmStability()` 对 >45s 的片子切三段复算，`spread≤5` 判稳定。
+- **`lib/template-extract.mjs`** — 参考片 → 模板（`cineforge/template/v1`）：`from_reference` 只记 basename + sha256（**已脱敏**）、四层 `style`/`structure`/`motion`/`sound`、`slots`、`caveats`。角色判定规则：**占比最高的颜色=ground，与它 WCAG 对比度最高的=ink，accent 须 sat≥0.30 且 share≥0.02 否则置 null**（早期「最暗的当 ground」在浅色片上会把角色全判反，已修）。`motion.cards` 恒空并标 `needs_review`（不假装能反解动效），另给 `cardsGuess` 低置信猜测。`scaled_proposals` 按目标时长给同密度改写提案，note 明说「不是原片结构」。`cuts_per_min > 12` 时追加高密度警告。
+- **`scripts/analyze.mjs`** — `node scripts/analyze.mjs video <片> [--out <目录>] [--json] [--no-fingerprint]` / `fingerprint` / `doctor`；默认产物落到片旁的 `analysis/`；`--json` 时 stdout 单行 JSON、进度走 stderr；退出码 2 未知模式 / 3 缺 ffmpeg / 1 异常。
+- **`scripts/extract-template.mjs`** — `node scripts/extract-template.mjs <片> --id <kebab> [--name] [--out] [--targets 15,20,30,45] [--json]`，复用已有分析产物，缺失则现场跑；产 `template-<id>.json` + `.md`。
+- **`knowledge/templates/template-world-search.json`** — 用真实参考片跑出的首个模板（304.8s / 1920×1080 / 24fps，76 镜，5 段结构，14.96 切/分，BPM 139.5，纸面 UI 叙事片）。
+
+### Added — 工作台骨架（A 阶段，0.4.0 只读）
+
+- **`lib/server/workbench-service.mjs`** — 挂载与工作区解析：`resolveWorkspaceRoot()` 五级优先级 ① `config.workspace` / `CINEFORGE_WORKSPACE` ② registry 中**带 `03_Video/02_MyWork` 目录**的工作区（多个取 `updatedAt` 最新）③ 与 `process.cwd()` 关联的 ④ registry 首个 ⑤ cwd。修掉的真实 bug：宿主进程 cwd 是 `C:\Users\15056\.dsh\profiles\desktop`，盲取 `registry[0]` 会落到 `08_Rtings-Calculate`。
+- **`lib/server/project-store.mjs`** — 工程读写：`NAME_RE` 放宽为 `/^[a-z0-9][a-z0-9_-]{0,63}$/`（允许下划线，本机四层规范要求目录带序号前缀如 `03_cineforge-demo-01`；仍禁点 / 斜杠 / 空格）；`summarizeProject` 的 `name` 用目录名作唯一可寻址键，`project_id` 另列。
+- **`lib/server/routes.mjs`** — 8 个端点，全部 same-origin 校验：`GET /health`、`GET /projects`、`GET /project?name=`、`POST /project/save`（rev CAS）、`POST /project/create`、`GET /cards`、`GET /templates`、`GET /asset?src=poster&id=`（支持 Range，可放成片 mp4）。`assetRoots()` 的 workspace 根已改为工程根（`03_Video/02_MyWork`）。
+- **`lib/client.js`** — 浏览器半身（55.9 KB，零第三方依赖、只 `require('react')`、CJS-in-factory）：`sidebar.panellist` 一行 + 配对 `main` 面板；三栏布局 A 输入源 / B 分镜 / C 镜头库；主题 token 全 scope 在 `.cfw`，`[data-theme=light]` 覆盖同名变量；一次性注入 `<style id="dsh-cineforge-styles">`；所有 fetch 走 `/dsh-cineforge/*`（不能挂 `/api`，那是 `dsh-client-connection` 独占总会 401 的 RPC 通道）。
+  - 隔离要点：路由与 webServer 走 `ctx.inject(["webServer"], child => …)` 子作用域 + `ctx.effect`，**不把 `tools`/`connection`/`webServer` 写进顶层 `inject`** —— 这正是 0.3.1 之前 `cannot get property "tools" without inject` 的成因。
+- **`lib/index.js`** — `apply(ctx, config)` 收 `config.workspace`；`cineforge_health` 工具输出加 `workspace_root` / `workspace_source` / `projects_root`，便于排障。
+- **`lib/version.mjs`** — 版本号单一真源＝`package.json`，运行时与 `/health` 都从这里取。
+- **`assets/posters/`** — 51 张上游 poster（961 KB）+ `INDEX.json`，供镜头库卡片缩略图用（124 卡中 50 张有对应 poster，其余走无预览占位）。
+
+### Changed
+
+- `package.json`：version `0.3.2` → **`0.4.0`**；新增 `exports["./client"] = ./lib/client.js` 与 `dsh.client = { platform: "web", inject: [] }`（有了 `dsh.client` 宿主才 compose 客户端半身）；scripts 新增 `analyze` / `extract-template`。
+- `scripts/self-test.mjs`：新增 C 阶段断言（模板 schema / slots 空 / `motion.cards` 恒空 / needs_review / ground=占比最高 / ink=对比最高 / accent=够饱和 / 段落合并 / 缩放提案 / BPM 估算标记 / Markdown 含调色板表与「不能做的」 / 单调色片不编 accent），**97 → 129 全绿**。
+
+### Verified
+
+- `node scripts/self-test.mjs` → `ok true / total 129 / passed 129 / failed 0`。
+- `node scripts/analyze.mjs doctor` → `source=path`，ffmpeg 8.1.1-full_build-www.gyan.dev。
+- 20s demo 实测：6 镜 / 18 关键帧 / 主色 `#10151b` 43.5% / 暗调 95.4% / **BPM 130**（真值 129）。
+- 304.8s 参考片实测：76 镜 / 228 关键帧 / 中位镜长 2.25s / 14.96 切每分 / 调色板 `#e6e3da` 42.7%(ground) · `#10141a` 14.2%(ink) / 明暗 13.9·3.3·82.8 / BPM 139.5 / 三段稳定性 spread 0。
+- 工作台端点实测：`/health` 200（`workspace_root=D:\…\11_Creation`、`workspace_source=video-workspace`）；`/projects` 200 列出 2 个工程（`03_cineforge-demo-01` 可写 rev=1，`cineforge-demo-01` 只读 rev=0）；`/templates` 200 count=1。
+- 客户端 bundle 已被宿主 compose：`/plugins/??dsh-cineforge/client.js&rev=…` 200 / 55942 B，`/dsh-unlag/graph` 的 entries 含该条目；DSH 侧栏「影铸工作台」一行经 UIA 实测存在。
+
+### Known limits
+
+- 0.4.0 的工作台是**只读**的：读工程、看分镜、看镜头库；拖拽重排 / 拉时长 / animatic 播放 / 确认放行在 0.4.1。
+- 无法用桌面自动化点开面板截图 —— 宿主策略拒绝向 DSH 自身窗口发送输入（`HOST_INPUT_DENIED`），UI 验收只能靠 HTTP 端点 + 用户目视。
+- 参考片分析不能：复制内容、1:1 反解动效、做片段语义理解。这三条已写进模板 markdown 的「不能做的」段落。
+
 ## [0.3.2] - 2026-11-25
 
 `fix(rework)`: cleared the P1/P2 backlog from the second independent final review (`docs/QA-一期返工终检报告.md`, 27 rules / 8 failing). No new dependencies, no new audio asset.

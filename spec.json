@@ -1,9 +1,9 @@
 {
   "name": "CineForge",
   "cn_name": "影铸 · AI 视频导演台",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "type": "dsh-plugin",
-  "status": "runtime",
+  "status": "runtime+workbench",
   "repository": "https://github.com/HJ-Create-World/dsh-cineforge",
   "license": "Apache-2.0",
   "upstream_license": "Apache-2.0",
@@ -65,7 +65,7 @@
       "audio_measurement": "lufsIntegrated -19.6 / truePeakDb -1.3 / clipping 0 / peak moment 17.745s (0.3.2 film, measured, not listened)"
     },
     "verification": {
-      "self_test": "97/97",
+      "self_test": "129/129 (0.4.0; C-phase reference analysis + template extraction assertions added)",
       "install_verify": "32/32 (isolated npm pack install + live desktop profile; 5 Cordis/Proxy regression checks added in 0.3.1)",
       "hf_check": "0 error / 10 warning (7 structure lint subcomposition phase-2 + 3 craft line_unread); layout/motion/contrast/audio all 0/0",
       "static_frames": "7 snapshots, all non-zero bytes, contact-sheet reviewed by eye",
@@ -144,5 +144,46 @@
     "compiler_version": "0.3.2",
     "sfx_clips": 12,
     "audio_alignment_evidence": "docs/QA-音频工程实测报告.md"
+  },
+  "v040": {
+    "date": "2026-11-25",
+    "version": "0.4.0",
+    "theme": "C 阶段（参考片分析转正）+ A 阶段（工作台骨架，只读）",
+    "new_modules": [
+      "lib/ffmpeg.mjs",
+      "lib/reference-analysis.mjs",
+      "lib/style-fingerprint.mjs",
+      "lib/template-extract.mjs",
+      "lib/version.mjs",
+      "lib/server/workbench-service.mjs",
+      "lib/server/project-store.mjs",
+      "lib/server/routes.mjs",
+      "lib/client.js",
+      "scripts/analyze.mjs",
+      "scripts/extract-template.mjs"
+    ],
+    "new_cli": {
+      "analyze": "node scripts/analyze.mjs video <file> [--out <dir>] [--json] [--no-fingerprint] | fingerprint | doctor",
+      "extract_template": "node scripts/extract-template.mjs <file> --id <kebab> [--name] [--out] [--targets 15,20,30,45] [--json]"
+    },
+    "workbench": {
+      "stage": "0.4.0 skeleton (read-only)",
+      "entry": "lib/client.js",
+      "slots": ["sidebar.panellist (id=dsh-cineforge)", "main (key=dsh-cineforge)"],
+      "routes": ["GET /health", "GET /projects", "GET /project?name=", "POST /project/save", "POST /project/create", "GET /cards", "GET /templates", "GET /asset?src=&id="],
+      "workspace_root_resolution": "config/env > video-workspace (registry, has 03_Video/02_MyWork, latest updatedAt) > cwd-match > first-workspace > cwd",
+      "projects_root": "03_Video/02_MyWork",
+      "theme": "CSS token override in .cfw + [data-theme=light]; not persisted to project.json"
+    },
+    "measured": {
+      "self_test": "129/129",
+      "demo_20s": { "shots": 6, "keyframes": 18, "palette_top": "#10151b 43.5%", "dark_ratio": 0.954, "bpm": 130, "bpm_truth": 129 },
+      "reference_304s": { "file": "world.search(you).mp4", "size_bytes": 38001030, "shots": 76, "keyframes": 228, "median_shot_s": 2.25, "cuts_per_min": 14.96, "palette_top": "#e6e3da 42.7%", "ink": "#10141a 14.2%", "tone_dark_mid_light": [13.9, 3.3, 82.8], "bpm": 139.5, "bpm_stability_spread": 0, "template": "knowledge/templates/template-world-search.json" }
+    },
+    "known_limits": [
+      "0.4.0 workbench is read-only: no drag reorder / duration trim / animatic playback / approve gate yet (0.4.1)",
+      "reference analysis cannot copy content, cannot reverse-engineer motion 1:1, cannot do semantic shot understanding",
+      "desktop automation cannot click the DSH host window (WCU_POLICY_DENIED / HOST_INPUT_DENIED); UI verified via HTTP endpoints only"
+    ]
   }
 }

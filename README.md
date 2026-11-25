@@ -5,9 +5,13 @@
 
 GitHub：[HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-cineforge) · 上游：[video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft)（Apache-2.0）
 
-## 当前状态：runtime 0.3.2（P1/P2 返工版 · 已接线 · 已装进本机 DSH）
+## 当前状态：runtime 0.4.0（工作台骨架 · 参考片分析转正 · 已装进本机 DSH）
 
-> 设计阶段（0.1.0-design）2026-11-24 经用户批准；0.2.0 完成运行时接线；0.3.0 按独立终检【打回】做了一期返工；**0.3.2 清掉二次终检的 P1/P2 返工项**（Q5 单主体开场 / Q8 收尾合影 / Q10 Q11 出版级字高 / S4 逐镜拟音 / S5 音轨峰值补偿 / C2 具体文案），自检 97/97。下方「二次独立终检结论」是 0.3.0 的历史判定，保留作整改依据。
+> 设计阶段（0.1.0-design）2026-11-24 经用户批准；0.2.0 完成运行时接线；0.3.0 按独立终检【打回】做了一期返工；0.3.2 清掉二次终检的 P1/P2 返工项；**0.4.0 落地 C 阶段（参考片分析转正）+ A 阶段（工作台骨架，只读）** —— 插件从「只有对话内技能」变成「对话技能 + 侧栏工作台面板」，并新增两条零依赖 CLI（`analyze` / `extract-template`），自检 97 → **129/129**。
+
+`[0.4.0]` 之后接着做 0.4.1（工作台能动：拖拽重排 / 拉时长 / animatic 播放 / 确认放行）与 0.4.2（收口：静帧验收墙 / 终检可视化 / 发布确认弹窗），再做 0.5.0（五条新需求界面：AI 自动分镜 + 局部改、GOAL 模式与软硬门、参考视频导入、流程存模板、明暗双主题）。
+
+> 「二次独立终检结论」与「独立终检结论」两节保留为历史判定与整改依据。
 
 | 能力 | 落地 | 实测结果 |
 |---|---|---|
@@ -15,10 +19,15 @@ GitHub：[HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-
 | 分镜编译 | `scripts/compile-hf.mjs`：`cineforge/storyboard/v1` → HyperFrames standalone（8 文件 + 本地 GSAP / 音频资产） | `hyperframes@0.9.88 check`：**0 error / 10 warning**（layout / motion / contrast / audio 全组 0/0；7 条结构 lint 属二期子组合 + 3 条 craft line_unread 短句可读性），均非阻断 |
 | 静帧验收 | `scripts/verify-hf.mjs`：check + 最多 6 时间点 snapshot + contact-sheet | 7 帧 png 全非零、`ok=true`、`empty_frames=0`；二次独立终检【有条件通过】（仅内部归档口径），见下 |
 | 成片渲染 | `hyperframes@0.9.88 render` | `examples/demo-project.json` → `renders/cineforge-demo-01_2026-11-25_14-12-40.mp4`；ffprobe：H.264 / 1080×1920 / 30fps / **600 帧 / 20.0s / 5.1MB** + **AAC 48kHz 立体声**；`hyperframes audio --json`：**−19.6 LUFS / −1.3 dBTP / 0 clipping**（峰值时刻 17.745s 落在 s06 收尾 impact，已测量、未试听） |
-| 离线自检 | `scripts/self-test.mjs`（零 CLI、零网络） | 97/97，含两次编译 10 个产物逐字节 sha256 相同 |
+| 离线自检 | `scripts/self-test.mjs`（零 CLI、零网络） | **129/129**，含两次编译 10 个产物逐字节 sha256 相同 |
 | 本机接线 | `scripts/install-local.mjs`：status / install / uninstall / verify，幂等、可回滚、默认 dry-run | 隔离 profile install→幂等→uninstall 全通过；live profile 已安装且技能注册 32/32 |
+| **参考片分析** | `scripts/analyze.mjs` + `lib/reference-analysis.mjs` / `lib/style-fingerprint.mjs`：切镜、关键帧、拼图、调色板、明暗、运动、BPM | 20s demo：6 镜 / 18 帧 / BPM 130（真值 129）；304.8s 参考片：76 镜 / 228 帧 / 14.96 切每分 / BPM 139.5（三段稳定性 spread 0） |
+| **模板提取** | `scripts/extract-template.mjs` + `lib/template-extract.mjs`：`cineforge/template/v1`，四层（风格 / 结构 / 动效 / 声音）+ slots | 真实参考片 → `knowledge/templates/template-world-search.json`，5 段结构 + 15/20/30/45s 缩放提案；`motion.cards` 恒空并标 `needs_review`（不假装能反解动效） |
+| **工作台（0.4.0 只读）** | `lib/client.js`（侧栏一行 + 配对 main 面板）+ `lib/server/`（8 端点，rev CAS） | `/health`、`/projects`、`/project`、`/cards`、`/templates`、`/asset` 全部实测 200；客户端 bundle 已被宿主 compose（55942 B），侧栏「影铸工作台」经 UIA 确认存在 |
 
-**GUI**：本版是**对话内技能**，无图形界面（独立视频创作工作台排二期）。插件无 `dsh.client` / `./client` 导出。
+**GUI**：0.4.0 起本插件**带图形界面** —— 左侧栏「影铸工作台」一行 + 配对主面板（三栏：A 输入源 / B 分镜 / C 镜头库）。本版**只读**：读工程、看分镜与镜头库；拖拽重排、拉时长、animatic 播放、确认放行在 0.4.1。
+
+> 无法用桌面自动化点开面板截图：宿主策略拒绝向 DSH 自身窗口发送任何桌面输入（`WCU_POLICY_DENIED / HOST_INPUT_DENIED`），UI 验收只能靠 HTTP 端点 + 用户目视。这是宿主的安全边界，不是插件缺陷。
 
 **发布到 dshmarket**：上架材料已备好（`store/` 草稿 YAML、`docs/PUBLISH-商店上架指南.md`、`README.en.md`、`assets/plugin-icon.png`、GitHub topics 已加）。**尚未提 PR** —— 仓库需满 1 天（2026-11-25 16:32 +08:00 后）并由用户手工向 `awesome-dsh-plugin` 提，这是用户之后的动作。想立即在 dshmarket 看到卡片，可在市场设置里加一个本地私有 catalog（见上架指南）。
 
@@ -26,7 +35,12 @@ GitHub：[HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-
 
 ```bash
 # 0. 离线自检（零依赖，秒级）
-npm test                         # scripts/self-test.mjs：97/97
+npm test                         # scripts/self-test.mjs：129/129
+
+# 0b. 参考片分析（需要 ffmpeg；本机已装 8.1.1，脚本会自动探测）
+npm run analyze -- doctor                              # 探测 ffmpeg / ffprobe
+npm run analyze -- video <参考片.mp4>                   # 切镜 + 关键帧 + 拼图 + 风格指纹
+npm run extract-template -- <参考片.mp4> --id my-style   # 出 cineforge/template/v1 + Markdown
 
 # 1. 分镜源：examples/demo-project.json（cineforge/storyboard/v1，抖音 9:16，6 镜 20s）
 #    真实使用由 cineforge-director 技能在对话中产出，并须经过分镜确认门
@@ -62,7 +76,23 @@ node scripts/install-local.mjs verify               # 真实 import 已安装位
 node scripts/install-local.mjs uninstall --apply    # 一键回滚
 ```
 
-插件的 `cordis.patch.yml` 由宿主在加载 bundle 时自动合并（`package.json` 的 `dsh.bundle.patch`），**不需要**写进 profile 的 `cordis.patch.yml`。安装脚本只改 `package.json` 的 `dependencies` 与 `dsh.profile.bundles` 两处。安装后重载 profile，DSH 对话里即出现 `cineforge-director` / `cineforge-cards` / `cineforge-qa` 三个技能与 `cineforge_health` 自检工具。
+插件的 `cordis.patch.yml` 由宿主在加载 bundle 时自动合并（`package.json` 的 `dsh.bundle.patch`），**不需要**写进 profile 的 `cordis.patch.yml`。安装脚本只改 `package.json` 的 `dependencies` 与 `dsh.profile.bundles` 两处。安装后重载 profile，DSH 对话里即出现 `cineforge-director` / `cineforge-cards` / `cineforge-qa` 三个技能与 `cineforge_health` 自检工具；**左侧栏底部同时出现「影铸工作台」一行**，点开是配对的主面板。
+
+### 工作台怎么开
+
+1. 侧栏「影铸工作台」一行（slot `sidebar.panellist`）→ 点开主面板（slot `main`，key 与侧栏 id 同为 `dsh-cineforge`）。
+2. 主面板三栏：**A 输入源**（文字 / 视频 / 模板三 tab、把关点、安全区提示）· **B 分镜**（镜头卡、能量曲线、帧级时间轴、animatic 播放器、确认放行条）· **C 资源库**（镜头库 124 / 模板）。
+3. 工程根＝工作区下的 `03_Video/02_MyWork`；每个工程一个目录（`<序号>_<kebab 名>/project.json`）。
+4. 顶栏 ◐ 切明暗主题（token 覆盖，不写进 `project.json`）。
+
+排障端点（同源，需 `Origin` 头对上）：
+
+```bash
+curl -H 'Origin: http://127.0.0.1:<port>' http://127.0.0.1:<port>/dsh-cineforge/health
+curl -H 'Origin: http://127.0.0.1:<port>' http://127.0.0.1:<port>/dsh-cineforge/projects
+```
+
+`/health` 会回 `workspace_root` 与 `workspace_source`（`config` / `env` / `video-workspace` / `cwd-match` / `first-workspace` / `cwd`）——工作台列不出工程时先看这两个字段。
 
 ## 交付物
 
@@ -102,7 +132,7 @@ node scripts/install-local.mjs uninstall --apply    # 一键回滚
 ## 规格
 
 - **类型**：DSH 插件（npm 包 + `cordis.patch.yml` + `ctx.skills.register`），非独立应用
-- **版本 / 状态**：0.3.2 / runtime（P1/P2 返工版，已接线、已装进本机 DSH，可跑通到带声 MP4；成片仍 NOT FOR PUBLISH）
+- **版本 / 状态**：0.4.0 / runtime + workbench（已接线、已装进本机 DSH，可跑通到带声 MP4；工作台 0.4.0 为只读骨架；成片仍 NOT FOR PUBLISH）
 - **主渲染后端**：HyperFrames（DSH 内置 `dsh-hyperframes` 0.14.1；CLI 钉 `hyperframes@0.9.88`），运行时依赖，不 vendor
 - **次渲染后端**：Remotion（自定 License，仅用于复刻上游调校过的 TSX 镜头，**本插件不分发**）
 - **上游**：[video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft)，Apache-2.0，作者 Wei Yihao，锁定 SHA `59f3e9b9e936ff2bce0e18446226d770a3f2f61f`

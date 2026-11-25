@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// CineForge · 离线自检（零依赖、零网络、零 CLI） v0.3.1（含 Cordis Proxy 回归）
+// CineForge · 离线自检（零依赖、零网络、零 CLI） v0.4.0（含 Cordis Proxy 回归 + 参考片分析纯函数）
 // 用法：node scripts/self-test.mjs
 // 校验：插件清单 / 补丁 / 3 技能 frontmatter 与注册 / health 工具 / 知识库 JSON / 卡库 /
 //       编译确定性（8 文件 + 复制资产）/ v2 manifest 契约 / 音频与 AIGC / 单一事实源。
@@ -57,6 +57,24 @@ async function main() {
   check("dsh.bundle.patch", pkg.dsh && pkg.dsh.bundle && pkg.dsh.bundle.patch === "./cordis.patch.yml");
   check("engines.dsh", pkg.engines && pkg.engines.dsh === ">=0.2.2-rc.3");
   check("license Apache-2.0", pkg.license === "Apache-2.0");
+  // v0.4.0 工作台：客户端半身与槽位契约（依据 dsh-config-sync-plugin/client.js 头注释）
+  check("package.json version 0.4.0", pkg.version === "0.4.0", pkg.version);
+  check("exports[\"./client\"]", pkg.exports && pkg.exports["./client"] === "./lib/client.js");
+  check("dsh.client web", pkg.dsh && pkg.dsh.client && pkg.dsh.client.platform === "web");
+  check("dsh.client.inject 为字符串数组", Array.isArray(pkg.dsh.client.inject) && pkg.dsh.client.inject.every((x) => typeof x === "string"));
+  check("client.js 存在", existsSync(join(ROOT, "lib", "client.js")));
+  const clientSrc = readFileSync(join(ROOT, "lib", "client.js"), "utf8");
+  check("client 走 __ModuleLoader__", clientSrc.indexOf("window.__ModuleLoader__.load") >= 0);
+  check("client 只 require react", clientSrc.split(String.fromCharCode(114,101,113,117,105,114,101,40,34)).length === 1 && clientSrc.indexOf("require(" + String.fromCharCode(39) + "react" + String.fromCharCode(39) + ")") >= 0);
+  check("client 不 import 宿主包", clientSrc.indexOf("from \"@deepseek-ai/") < 0 && clientSrc.indexOf("from '@deepseek-ai/") < 0 && clientSrc.indexOf("require(\"@deepseek-ai/") < 0 && clientSrc.indexOf("require('@deepseek-ai/") < 0);
+  check("client 成对注册 main 与 sidebar.panellist", clientSrc.indexOf("slots.inject(\x27main\x27") >= 0 && clientSrc.indexOf("slots.inject(\x27sidebar.panellist\x27") >= 0);
+  check("client 的 id 与 main key 一致", clientSrc.indexOf("const PANEL_ID = \x27dsh-cineforge\x27") >= 0);
+  check("client 样式 id 幂等", clientSrc.indexOf("dsh-cineforge-styles") >= 0);
+  check("client 返回对话用 selectPanel(null)", clientSrc.indexOf("selectPanel(null)") >= 0);
+  // 服务端：路由与存储（0.4.0 A 阶段）
+  check("project-store 存在", existsSync(join(ROOT, "lib", "server", "project-store.mjs")));
+  check("routes 前缀固定", readFileSync(join(ROOT, "lib", "server", "routes.mjs"), "utf8").indexOf("ROUTE_PREFIX = \"/dsh-cineforge\"") >= 0);
+  check("海报资源 50 张", (() => { try { const idx = readJson(join(ROOT, "assets", "posters", "INDEX.json")); return idx.count === 50 && Object.keys(idx.posters).length === 50; } catch (e) { return false; } })());
   check("cordis.patch.yml 存在", existsSync(join(ROOT, "cordis.patch.yml")));
   const patch = readFileSync(join(ROOT, "cordis.patch.yml"), "utf8");
   check("补丁声明 cineforge-skills", patch.indexOf("cineforge-skills") >= 0 && patch.indexOf("- insert:") >= 0);
@@ -142,6 +160,61 @@ async function main() {
   check("tools 已 inject 时 cineforge_health 注册", tlC.has("cineforge_health"));
 
 
+
+  // ---- C 阶段：参考片分析 / 模板提取（纯函数部分，不调 ffmpeg） ----
+  const ra = await import("../lib/reference-analysis.mjs");
+  const sf = await import("../lib/style-fingerprint.mjs");
+  const te = await import("../lib/template-extract.mjs");
+  check("reference-analysis 导出 segment/shotStats", typeof ra.segment === "function" && typeof ra.shotStats === "function");
+  check("style-fingerprint 导出 palette/motion/rhythm/bpmStability", ["palette", "motion", "rhythm", "bpmStability"].every((k) => typeof sf[k] === "function"));
+  check("template-extract 导出 extractTemplate", typeof te.extractTemplate === "function");
+
+  // 合成一份分析 + 指纹，验证模板提取的硬约束（不依赖任何视频文件）
+  const fakeStats = [
+    { index: 1, from: 0, to: 3, duration_s: 3, luma: 12, dark_ratio: 1, motion: 0.4, kind: "dark" },
+    { index: 2, from: 3, to: 9, duration_s: 6, luma: 210, dark_ratio: 0, motion: 1.2, kind: "paper" },
+    { index: 3, from: 9, to: 11, duration_s: 2, luma: 205, dark_ratio: 0, motion: 2.0, kind: "paper" },
+    { index: 4, from: 11, to: 12.5, duration_s: 1.5, luma: 200, dark_ratio: 0, motion: 0.8, kind: "paper" },
+  ];
+  const fakeAnalysis = {
+    schema: "cineforge/reference-analysis/v1",
+    source: "fake.mp4",
+    meta: { width: 1920, height: 1080, fps: 30, duration_s: 12.5, has_audio: true, size_bytes: 1 },
+    segmentation: { shots: fakeStats.map((x) => ({ index: x.index, from: x.from, to: x.to, duration_s: x.duration_s, duration_f: Math.round(x.duration_s * 30) })) },
+    stats: fakeStats,
+  };
+  const fakeFp = {
+    schema: "cineforge/style-fingerprint/v3",
+    palette: [
+      { hex: "#f4f1ea", share: 0.55, lum: 240 },
+      { hex: "#11151c", share: 0.3, lum: 21 },
+      { hex: "#d3923c", share: 0.08, lum: 150 },
+    ],
+    tone: { dark_pct: 30, mid_pct: 5, light_pct: 65 },
+    motion: { p50: 0.3, p90: 1.4, p99: 8, static_ratio: 0.7 },
+    audio: { bpm_est: 120, bpm_top: [{ bpm: 120, score: 1 }], onsets: 20, median_ioi_s: 0.5, cut_beat_alignment: null },
+  };
+  const tpl = te.extractTemplate(fakeAnalysis, fakeFp, { id: "t", name: "T", targets: [15, 30] });
+  check("模板 schema", tpl.schema === "cineforge/template/v1");
+  check("模板不含具体文案字段", !("script" in tpl) || tpl.script === undefined);
+  check("模板 slots 为空", Array.isArray(tpl.slots) && tpl.slots.length === 0);
+  check("模板 motion.cards 恒为空", Array.isArray(tpl.motion.cards) && tpl.motion.cards.length === 0);
+  check("模板 motion.needs_review", tpl.motion.needs_review === true);
+  // 浅色片：占比最高的必须是 ground（踩过反了的坑）
+  check("模板调色板 ground=占比最高", tpl.style.palette[0].role === "ground" && tpl.style.palette[0].hex === "#f4f1ea");
+  check("模板调色板 ink=与 ground 对比最高", tpl.style.palette[1].role === "ink");
+  check("模板调色板 accent=够饱和那个", tpl.style.palette.some((c) => c.role === "accent" && c.hex === "#d3923c"));
+  check("模板段落合并", tpl.structure.chapters.length === 2 && tpl.structure.chapters[0].kind === "dark");
+  check("模板缩放提案", tpl.structure.scaled_proposals.length === 2 && tpl.structure.scaled_proposals[0].shot_count >= 3);
+  check("模板 BPM 标为估计", tpl.sound && tpl.sound.bpm === 120 && tpl.sound.bpm_is_estimate === true);
+  const md = te.renderTemplateMarkdown(tpl, fakeAnalysis);
+  check("模板 Markdown 有调色板表", md.indexOf("调色板") >= 0 && md.indexOf("#f4f1ea") >= 0);
+  check("模板 Markdown 有禁止项", md.indexOf("不能做的") >= 0);
+  // 单调色片：不许硬编 accent
+  const monoFp = { ...fakeFp, palette: [{ hex: "#202020", share: 0.8, lum: 32 }, { hex: "#d0d0d0", share: 0.2, lum: 208 }] };
+  const monotpl = te.extractTemplate(fakeAnalysis, monoFp, { id: "m", name: "M" });
+  check("单调色片不编 accent", !monotpl.style.palette.some((c) => c.role === "accent"));
+
   // 知识库 JSON 全部可解析
   const kb = ["storyboard.schema.json", "aesthetic-rules.json", "motion-tokens.json", "energy-arc.json", "platform-presets.json", "shot-cards.json", "shot-cards.md"];
   for (const f of kb) {
@@ -216,7 +289,7 @@ async function main() {
     schema: "cineforge/self-test/v1",
     plugin: pluginName,
     inject,
-    version: "0.3.2",
+    version: "0.4.0",
     total: results.length,
     passed: results.length - failed.length,
     failed,

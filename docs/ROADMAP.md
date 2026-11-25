@@ -29,13 +29,56 @@
 
 **一期验收（实测）**：在 DSH 对话里说「给我的 XX 做个 45 秒抖音视频」，技能自动触发 → 分镜确认 → 输出 MP4 + 终检报告。
 
-编译器链路已在 `examples/demo-project.json` 上端到端跑通：`compile-hf.mjs`（8 文件 + 本地 GSAP / 音频资产）→ `verify-hf.mjs`（check 0 error / 7 帧静帧）→ `hyperframes render` → ffprobe 核对（H.264 / 1080×1920 / 30fps / 600 帧 / 20.0s / 5.1MB + AAC 48kHz 立体声）→ `hyperframes audio --json`（0.3.2 实测 −19.6 LUFS / −1.3 dBTP / 0 clipping，峰值 17.745s 落 s06，已测量未试听）。`self-test.mjs` **97/97**、`install-local.mjs verify` **32/32**（隔离 profile 真实 `npm pack` → `npm install` → import，以及 live `desktop` profile）。
+编译器链路已在 `examples/demo-project.json` 上端到端跑通：`compile-hf.mjs`（8 文件 + 本地 GSAP / 音频资产）→ `verify-hf.mjs`（check 0 error / 7 帧静帧）→ `hyperframes render` → ffprobe 核对（H.264 / 1080×1920 / 30fps / 600 帧 / 20.0s / 5.1MB + AAC 48kHz 立体声）→ `hyperframes audio --json`（0.3.2 实测 −19.6 LUFS / −1.3 dBTP / 0 clipping，峰值 17.745s 落 s06，已测量未试听）。`self-test.mjs` **129/129**（0.4.0）、`install-local.mjs verify` **32/32**（隔离 profile 真实 `npm pack` → `npm install` → import，以及 live `desktop` profile）。
 
-**运行期接线（已完成）**：用户 m00741 授权后，已把插件装进 live `desktop` profile（`install-local.mjs install --apply` + `pnpm install` 落地 symlink），0.3.0 装入时 verify 27/27；0.3.2 用真 node 复核得 **32/32**（0.3.1 起新增 5 条 Cordis/Proxy 回归断言），`imported_from` 指向 `node_modules/dsh-cineforge`，技能注册确认。备份在 `.local/profile-backup/desktop-before-install-*.json`；一键回滚 `node scripts/install-local.mjs uninstall --apply`。**GUI**：本版是对话内技能，**无图形界面**（`package.json` 无 `dsh.client` / `./client` 导出），独立工作台排二期。
+**运行期接线（已完成）**：用户 m00741 授权后，已把插件装进 live `desktop` profile（`install-local.mjs install --apply` + `pnpm install` 落地 symlink），0.3.0 装入时 verify 27/27；0.3.2 用真 node 复核得 **32/32**（0.3.1 起新增 5 条 Cordis/Proxy 回归断言），`imported_from` 指向 `node_modules/dsh-cineforge`，技能注册确认。备份在 `.local/profile-backup/desktop-before-install-*.json`；一键回滚 `node scripts/install-local.mjs uninstall --apply`。**GUI**：0.4.0 起带图形界面 —— `package.json` 已加 `exports["./client"]` 与 `dsh.client = {platform:"web"}`，`lib/client.js` 注册侧栏一行 + 配对 main 面板（只读骨架）。
 
 **插件落地形态（已实测）**：DSH 插件 = npm 包，声明全在 `package.json` 的 `dsh` 字段，靠 `cordis.patch.yml` 的 `- insert:` 行加载；能力用 `ctx.skills.register` / `ctx.tools` 注册；Web UI 另用 `exports["./client"]` + `ctx.slots.inject`。客户端 HMR 走 `/plugins/events` SSE（需 `pnpm run dev:web` + watcher，Electron 不走此路）。安装：`dsh plugin --profile desktop add <spec>`。
 
-## 二期 · 独立视频创作工作台
+## 二期 · 独立视频创作工作台（0.4.x）
+
+### 0.4.0 · 参考片分析转正（C）+ 工作台骨架（A）· ✅ 已完成 2026-11-25
+
+| 项 | 内容 | 状态 |
+|---|---|---|
+| 参考片切镜 | `lib/reference-analysis.mjs` 自研帧差法（fps 4 / 宽 48 / 灰度，`max(mean*2,5)`，0.5s 合并，0.25s 片头护栏）——**ffmpeg 官方 `scdet` 与 `select=gt(scene,…)` 在本机测试片 0 命中，不可用** | ✅ |
+| 关键帧 + 拼图 | 每镜 15%/50%/85% 三帧（360px）+ 中点帧 drawtext 标号 hstack | ✅ |
+| 风格指纹 | 调色板 k=6 + 占比 / 明暗三档 / 运动 p50·p90·p99 + static_ratio / BPM 谐波求和自相关 + 长片三段稳定性 | ✅ |
+| 模板提取 | `cineforge/template/v1` 四层（style/structure/motion/sound）+ slots + caveats；`motion.cards` 恒空并标 `needs_review` | ✅ |
+| 两条 CLI | `npm run analyze -- …` / `npm run extract-template -- …` | ✅ |
+| 首个真实模板 | `knowledge/templates/template-world-search.json`（304.8s / 76 镜 / 5 段 / BPM 139.5） | ✅ |
+| 服务端 | `lib/server/`：8 端点，rev CAS 保存、路径安全（只收 kebab/下划线工程名，resolve 后在工程根内）、asset 支持 Range | ✅ |
+| 客户端 | `lib/client.js` 侧栏一行 + 配对 main 面板，三栏 A/B/C，明暗 token 主题，零第三方依赖 | ✅ |
+| 工作区解析 | 五级优先级，修掉「盲取 registry[0] 落到 08_Rtings-Calculate」的真 bug | ✅ |
+| 自检 | `scripts/self-test.mjs` 97 → **129/129** | ✅ |
+| 只读边界 | 只读工程 / 看分镜 / 看镜头库；拖拽与放行未做 | ⬜ 0.4.1 |
+
+### 0.4.1 · 能动（下一版）
+
+- [ ] 分镜卡拖拽重排（写回 `shots[]` 顺序 + `from` 重算）
+- [ ] 时长拉伸（拖右边缘改 `duration_f`，同步能量曲线与时间轴）
+- [ ] 从 C 区镜头库拖卡进 B 区（新建镜 / 替换镜）
+- [ ] animatic 播放器（`compile-hf.mjs --animatic`：540p 静帧驱动 + 真实时间轴与音轨）
+- [ ] 呼吸检查（每镜落定后的静帧停留时长告警）
+- [ ] 确认放行门（`stage` 推进需要显式确认，写 `approved_at` / `approved_by`）
+- [ ] `POST /project/save` 的 409 冲突 UI（保留我的 / 用远端的 / 手动看 diff）
+
+### 0.4.2 · 收口
+
+- [ ] 静帧验收墙（7–12 帧网格 + 点击放大 + 单帧重渲）
+- [ ] 终检报告可视化（27 条准则逐条 ✓/✗/N/A + 帧号证据）
+- [ ] 发布确认弹窗（八项：标题/简介/封面/标签/AI 显式标识/AI 隐式标识/版权/平台）
+- [ ] 未保存拦截、只读锁定提示、后端不可用时的降级占位
+
+### 0.5.0 · 五条新需求界面
+
+- [ ] AI 自动分镜 + 局部修改（`locked` 路径数组 + `user_edited` 视觉标记）
+- [ ] GOAL 模式（阶段机 + 安全点打断 + 软硬门）
+- [ ] 参考视频导入（UI 接上 0.4.0 的分析能力，展示切镜拼图与指纹）
+- [ ] 流程存模板（C 区模板 tab + 五层复用开关 + slots 校验）
+- [ ] 明暗双主题（已具备 token 基础）+ 更多主题扩展点
+
+## 二期原始清单（历史，部分已被上面 0.4.x 覆盖）
 
 - [ ] **A 方案（推荐）**：DSH 原生侧栏面板 `ctx.slots.inject("sidebar.panellist", …)` + `ctx.slots.inject("main", …)`，实证 `PF/node_modules/dsh-hyperframes/lib/client.js:137,2528-2529`
 - [ ] B 方案（备选）：iframe 页 `ctx.sidebarRight.openTab("browser", {params:{url}})`

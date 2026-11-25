@@ -4,11 +4,11 @@ CineForge is a DSH plugin that provides in-chat skills for turning a brief into 
 
 GitHub: [HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-cineforge) · Upstream: [video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft) (Apache-2.0)
 
-> This README describes what is actually implemented in 0.3.2 (the P1/P2 rework; the 0.3.0 second-review verdict below is the historical basis for it). It does not claim features planned for later phases. For the full Chinese README, see [README.md](README.md).
+> This README describes what is actually implemented in **0.4.0** (workbench skeleton + reference-video analysis). It does not claim features planned for later phases. For the full Chinese README, see [README.md](README.md).
 
-## Current status: runtime 0.3.2 (P1/P2 rework; wired; installed into the live DSH profile)
+## Current status: runtime 0.4.0 (workbench skeleton · reference analysis · installed into the live DSH profile)
 
-The design phase (0.1.0-design) was closed on 2026-11-24; 0.2.0 wired the runtime; 0.3.0 reworked the phase-1 demo film after an independent final review returned "rework"; **0.3.2 cleared the second review's P1/P2 backlog** (single-subject opening, group-photo finale, publication-grade type scale, per-shot foley, measured audio peak compensation, concrete copy). Offline self-test 97/97. The second-review verdict below is the historical 0.3.0 basis for the rework.
+The design phase (0.1.0-design) was closed on 2026-11-24; 0.2.0 wired the runtime; 0.3.0/0.3.2 reworked the phase-1 demo film after two independent final reviews; **0.4.0 lands phase C (reference-video analysis promoted to `lib/`) and phase A (a read-only workbench panel)** — the plugin is no longer skills-only: it ships a `sidebar.panellist` row plus a paired `main` panel, and two zero-dependency CLIs (`analyze`, `extract-template`). Offline self-test is **129/129**. Next: 0.4.1 (interactive workbench), 0.4.2 (polish), 0.5.0 (the five new-requirement UI surfaces).
 
 | Capability | Implementation | Measured result |
 |---|---|---|
@@ -19,7 +19,7 @@ The design phase (0.1.0-design) was closed on 2026-11-24; 0.2.0 wired the runtim
 | Offline self-test | `scripts/self-test.mjs` (zero CLI, zero network) | 97/97, including byte-identical sha256 across two compilations of 10 artifacts (deterministic render) |
 | Local DSH wiring | `scripts/install-local.mjs`: status / install / uninstall / verify, idempotent, reversible, dry-run by default | isolated profile install → idempotent → uninstall all pass; **installed into the live `desktop` profile and verified 32/32** |
 
-**GUI**: this release is a set of **in-chat skills with no graphical interface** (no `dsh.client` / `./client` export). A standalone video workbench is planned for phase 2. **Store listing**: materials are prepared but **no PR has been submitted**; listing requires the repository to be ≥1 day old (after 2026-11-25 16:32 +08:00) and a manual PR to `awesome-dsh-plugin` by the user. A local private catalog can make the card visible immediately (see `docs/PUBLISH-商店上架指南.md`).
+**GUI**: as of 0.4.0 the plugin **ships a graphical workbench**: a `sidebar.panellist` row ("影铸工作台") plus a paired `main` panel with three columns (A input sources / B storyboard / C library). This release is **read-only** — it lists projects, reads storyboards and browses the 124-card library; drag-reorder, duration trimming, animatic playback and the approve gate land in 0.4.1. **Store listing**: materials are prepared but **no PR has been submitted**; listing requires the repository to be ≥1 day old (after 2026-11-25 16:32 +08:00) and a manual PR to `awesome-dsh-plugin` by the user. A local private catalog can make the card visible immediately (see `docs/PUBLISH-商店上架指南.md`).
 
 ## Quick start (runtime)
 
@@ -98,7 +98,7 @@ The plugin's `cordis.patch.yml` is merged automatically by the host when loading
 ## Specs
 
 - **Type**: DSH plugin (npm package + `cordis.patch.yml` + `ctx.skills.register`), not a standalone app.
-- **Version / status**: 0.3.2 / runtime (P1/P2 rework, wired, installed into the live DSH profile, can run through to an audio-enabled MP4; film still NOT FOR PUBLISH).
+- **Version / status**: 0.4.0 / runtime + workbench (wired, installed into the live DSH profile, can run through to an audio-enabled MP4; workbench is a read-only skeleton in 0.4.0; film still NOT FOR PUBLISH).
 - **Primary render backend**: HyperFrames (DSH built-in `dsh-hyperframes` 0.14.1; CLI pinned `hyperframes@0.9.88`), a runtime dependency, not vendored.
 - **Upstream**: [video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft), Apache-2.0, author Wei Yihao, pinned SHA `59f3e9b9e936ff2bce0e18446226d770a3f2f61f`. Only the 124 shot recipe cards, aesthetic rules and motion-token method were absorbed; runtime rendering goes through HyperFrames. No Remotion or MotionHarness code is bundled.
 - **Knowledge scale**: 124 shot recipe cards / 150 animation styles / 10 categories.
@@ -122,7 +122,7 @@ See `docs/QA-一期返工终检报告.md`: a clean-context independent subagent 
 
 1. **The 0.2.0 demo film was rejected by an independent final review (2026-11-24).** 27 rules: ✓7 / ✗14 / N/A6; verdict "rework"; P0 `publish.ai_disclosure` (explicit + implicit AI labels) both false; **NOT FOR PUBLISH**. 0.3.0 reworked that film into 6 shots / 20s / audio-enabled and fixed the flagged engineering defects, but `publish.ai_disclosure` is still unset, so the film remains **NOT FOR PUBLISH**. It is a phase-1 taste-layer / pipeline demo, not a finished film; see `docs/QA-一期终检报告.md` (historical) and `docs/QA-一期返工终检报告.md`.
 2. **The phase-1 compiler is not a per-card reproduction of the 124 cards.** `lib/hf-primitives.mjs` implements 7 deterministic GSAP primitives (fade / slide-up / slide-left / scale-in / crash-zoom / wipe / hold), 10 category mappings and 6 preset eases. The automatic 124-card → HyperFrames mapping table is planned for phase 3.
-3. **No GUI workbench (phase 2) and no publishing loop (phase 3).** There is no B站 / 抖音 publishing closed loop; the phase-10 publish confirmation is a design gate.
+3. **The 0.4.0 workbench is read-only, and there is no publishing loop yet.** No drag-reorder / trimming / animatic playback / approve gate (0.4.1), no B站 / 抖音 publishing closed loop; the phase-10 publish confirmation is a design gate.
 4. **Claims to avoid.** A delivered "top-tier design feel" or "all 124 cards usable per card" are targets / aspirations, not features of 0.3.0. `check 0 error` proves contract compliance, not visual quality.
 5. **Upstream attribution.** Apache-2.0; `NOTICE` records the upstream chain (video-shotcraft © Wei Yihao). Four `ATTRIBUTION.md` files in the upstream archive must be preserved verbatim. No Remotion or MotionHarness code is distributed with this plugin.
 6. **Plugin listing is a separate matter** from publishing a film. The store submission is a local DRAFT and has not been submitted; see `docs/PUBLISH-商店上架指南.md`.

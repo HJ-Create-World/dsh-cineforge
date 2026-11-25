@@ -1,11 +1,12 @@
 {
   "name": "dsh-cineforge",
-  "version": "0.3.2",
-  "description": "CineForge 影铸 · AI 视频导演台 —— DSH 视频创作增强版插件。把一句 idea 扩写成文案、分镜与动效映射，编译成 HyperFrames 成片；让普通模型的视频创作也有 Opus 级设计感。上游 video-shotcraft (Apache-2.0)。",
+  "version": "0.4.0",
+  "description": "CineForge 影铸 · AI 视频导演台 —— DSH 视频创作增强版插件。把一句 idea 扩写成文案、分镜与动效映射，编译成 HyperFrames 成片，并自带独立工作台面板（侧栏「影铸工作台」）。上游 video-shotcraft (Apache-2.0)。",
   "type": "module",
   "main": "./lib/index.js",
   "exports": {
     ".": "./lib/index.js",
+    "./client": "./lib/client.js",
     "./package.json": "./package.json"
   },
   "files": [
@@ -30,6 +31,10 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": []
     }
   },
   "engines": {
@@ -68,6 +73,8 @@
     "install:local": "node scripts/install-local.mjs install --apply",
     "install:status": "node scripts/install-local.mjs status",
     "install:verify": "node scripts/install-local.mjs verify",
-    "install:undo": "node scripts/install-local.mjs uninstall --apply"
+    "install:undo": "node scripts/install-local.mjs uninstall --apply",
+    "analyze": "node scripts/analyze.mjs",
+    "extract-template": "node scripts/extract-template.mjs"
   }
 }
