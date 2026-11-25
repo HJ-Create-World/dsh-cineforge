@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+（0.4.2 及之后）
+
+## [0.4.1] - 2026-11-25
+
+`feat(workbench)`: 工作台从只读骨架变成**能动** —— 拖拽重排、拉时长、拖卡入板、animatic 预览片、分镜体检与确认放行，全部走真实端点与 rev CAS；自检 129 → **156/156**。无新增运行时依赖。
+
+### Added — 分镜可编辑（B 区）
+
+- **拖拽重排**：分镜卡 `draggable`，卡片间落位即换序；`reflowShots(shots,fps)` 按新顺序重算 `from`，`duration_f` 下限 1 帧，杜绝空洞与重叠。
+- **拖右边缘拉时长**：卡片右侧 7px 把手（`.rz`，`cursor:ew-resize`），按 `pxPerFrame = max(0.6, 620/max(120,totalFrames))` 把像素位移换算成帧，最小 15 帧（0.5s @30fps），松手即 reflow。
+- **从镜头库拖卡进来**：库条目 `draggable`，`dataTransfer` 走自定义 MIME `text/cfw-card`；丢到分镜板空白处=**末尾追加**，丢到某镜上=**替换该镜**（默认 `duration_f:90` / `energy:'mid'`）。
+- **连续编辑只发一次保存**：本地立即生效（`applyLocal`）+ 500ms 防抖，拖动过程中不打断手感。
+
+### Added — animatic 预览片（核心）
+
+- **`lib/animatic.mjs`（新，13.2 KB）**：把 project.json 直接编译成**低分辨率、静帧驱动、但时间线与声音完全真实**的预览片。`ANIMATIC_FPS=24`、`canvasOf(aspect)`（9:16→540×960 / 1:1→540×540 / 3:4→540×720 / 4:3→720×540 / 默认 960×540）、`timelineOf(project)`、`wrapText()`（中文宽 1、英文 0.56 逐字折行）、`buildAnimatic()`。
+- 每镜一张 drawtext「定妆卡」（序号 / 分类·能量 / 标题 / 副标题 / card_id / `X.XXs · Nf` / 「ANIMATIC · 预览 · 非最终」/ 进度条），再逐镜出 mp4、concat、按 `peak_f` 抵消 SFX 峰值偏移后 amix BGM+SFX，输出 `animatic.mp4` + `animatic.json`（schema `cineforge/animatic/v1`）。
+- **为什么值得**：HyperFrames 渲染是分钟级且要 npx/浏览器，用户拖完分镜需要「立刻听到新节奏」。实测 20s / 6 镜 **build_ms 2300**（约 2.3 秒出片），540×960 / 24fps / 13 条音轨；BGM 拍点与 SFX 位置与成片一致。
+- **两个实测踩坑**（代码里都有注释）：① concat 列表必须写**绝对路径**（demuxer 以 list 文件所在目录为基准解析）；② 每镜 `fade=t=in:d=0.10` 会在每个切点产生可察觉暗闪，已整段删除。
+
+### Added — 分镜体检与确认门
+
+- **`lib/lint.mjs`（新，6.3 KB）**：`lintStoryboard(project,{cardMap})` 出 `{passed,findings,summary}`，按 error / warn / info 分级；规则含卡片是否在库（C1）、能量弧（R4）等。error 才阻断放行，warn/info 只提示。
+- **`POST /dsh-cineforge/lint`**：客户端只传工程名，服务端自己读 project.json 并跑 lint。
+- **`POST /dsh-cineforge/animatic`**：现场生成预览片（`resolveFfmpeg` 找不到 ffmpeg → 503 `NO_FFMPEG`，只读工程 → 403），生成后把摘要写回 `project.animatic`（rev CAS，写失败不影响预览片可用）。
+- **`POST /dsh-cineforge/gate`**：只接受 `gate:'storyboard'`；`open:true` 前先跑 lint，有 error → 409 `LINT_BLOCKED`（附 error 条目）；通过则写 `gates.storyboard={open,at,by:'user',rev}` 并把 `stage` 推到 `assets`；撤回则回到 `storyboard`。
+- **UI**：B 区新增「分镜体检」面板（`LintPanel`，error>warn>info 排序、最多 12 条）、「生成预览 / 重新生成」按钮、以及真正可点的「确认放行 →」/「撤回放行」。
+
+### Added — 并发与冲突
+
+- **409 冲突面板**（`ConflictPanel`）：显示服务端 `currentRev` 与本地 `baseRev`、两版镜数，三个选择「先不动 / 用服务端的 / 用我的覆盖」。服务端**绝不自动 merge**。
+- **保存串行化**：`savingRef` 保证一次只发一个保存请求（否则自己跟自己撞 409），`againRef` 记账「保存期间又改过」，存完补发一次；补发期间保存态保持「未保存」。
+- **顶栏保存态**接真：`保存中…` / `未保存` / `已保存`。
+
+### Changed
+
+- `package.json`：version `0.4.0` → **`0.4.1`**。
+- `scripts/compile-hf.mjs`：`compiler_version` 与 aigc `generator` 由 `0.3.2` 更新为 `0.4.1`（此前漏改）。
+- `lib/server/routes.mjs` / `lib/server/workbench-service.mjs`：端点表 8 → **11** 条。
+- `lib/client.js`：55.9 KB → **77.7 KB**；新增 CSS 20 条，全部走 `.cfw` 主题 token，不写死颜色。
+- C 区补上区块头「C · 资源库」（此前只有 A/B 有，视觉上像少了标题）。
+
+### Verified
+
+- `node scripts/self-test.mjs` → **ok true / total 156 / passed 156 / failed 0**。
+- 真实 HTTP（同源 `Origin` 头）：`/lint` 200 `passed:true`（3 条 warn）；`/animatic` 200 `build_ms:2300`，产物 `03_cineforge-demo-01/animatic/animatic.mp4` 400839 B；`/gate` open→rev 3 / stage `assets`，close→rev 4 / stage `storyboard`。
+- **组件级渲染冒烟**：`.local/probe/render-smoke.cjs` 用 vm + 极简 React（受控 `useState`）把 `WorkbenchPanel` 真跑一遍，断言 A/B/C 三区、S01–S03、拖动提示、放行按钮、体检面板、冲突面板、toast 全部出现在渲染文本里（当前 `MISS []`）。
+- 抽帧复核 animatic 切点：删掉每镜 fade 后第 239–242 帧无黑闪。
+
+
 ### Added
 
 - Store-listing preparation materials (DRAFT only; **no PR submitted**):

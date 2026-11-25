@@ -70,12 +70,13 @@ function fill(tpl, map) {
   return s;
 }
 function parseArgs(argv) {
-  const o = { project: null, out: null, strict: false };
+  const o = { project: null, out: null, strict: false, animatic: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--project" || a === "-p") o.project = argv[++i];
     else if (a === "--out" || a === "-o") o.out = argv[++i];
     else if (a === "--strict") o.strict = true;
+    else if (a === "--animatic") o.animatic = true;
   }
   return o;
 }
@@ -428,7 +429,7 @@ function compile(sb, opts) {
   const legalHits = screenText.match(/导演级|Opus|最优|第一|免费商用|绝对|100%|顶级|最好/g) || [];
   const manifest = {
     schema: "cineforge/hf-manifest/v2",
-    compiler_version: "0.3.2",
+    compiler_version: "0.4.1",
     project_id: sb.project.id,
     platform: canvas.platform, aspect: canvas.aspect,
     width: canvas.width, height: canvas.height, fps: canvas.fps,
@@ -481,7 +482,7 @@ function compile(sb, opts) {
   };
   const aigcMeta = {
     schema: "cineforge/aigc/v1",
-    generator: "CineForge / dsh-cineforge 0.3.2",
+    generator: "CineForge / dsh-cineforge 0.4.1",
     upstream: "https://github.com/Vincentwei1021/video-shotcraft",
     upstream_license: "Apache-2.0",
     label: AIGC_LABEL,
@@ -504,14 +505,24 @@ function compile(sb, opts) {
   return { outDir, manifest, total_s, totalF, shotCount: shots.length, audioCount: audio.used.length };
 }
 
-function main() {
+async function main() {
   const a = parseArgs(process.argv.slice(2));
   const projectPath = a.project || path.join(ROOT, "examples", "demo-project.json");
   const sb = loadJson(projectPath);
   const r = compile(sb, { out: a.out, strict: a.strict });
-  console.log(JSON.stringify({ ok: true, out: r.outDir, duration_s: r.total_s, frames: r.totalF, shots: r.shotCount, audio: r.audioCount, warnings: r.manifest.warnings }, null, 2));
+  const out = { ok: true, out: r.outDir, duration_s: r.total_s, frames: r.totalF, shots: r.shotCount, audio: r.audioCount, warnings: r.manifest.warnings };
+  if (a.animatic) {
+    // 预览片：画面是定妆帧、时间线与声音是真的。不能当验收依据，也不发布。
+    const { buildAnimatic } = await import("../lib/animatic.mjs");
+    const { resolveFfmpeg } = await import("../lib/ffmpeg.mjs");
+    const ff = resolveFfmpeg(process.env);
+    if (!ff.ffmpeg) { console.error("animatic: 找不到 ffmpeg，请设 CINEFORGE_FFMPEG 或装到 PATH"); process.exit(3); }
+    const an = await buildAnimatic({ project: sb, outDir: path.join(r.outDir, "animatic"), ffmpeg: ff.ffmpeg, audioDir: path.join(ROOT, "assets", "audio") });
+    out.animatic = { mp4: an.file, duration_s: an.duration_s, shots: an.shots, fps: an.fps, audio_tracks: an.audio_tracks, build_ms: an.build_ms, warnings: an.warnings };
+  }
+  console.log(JSON.stringify(out, null, 2));
 }
 
 export { compile, fill, normalizeShots, buildTweens, HF_CONFIG };
 
-if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url))) main();
+if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url))) main().catch((e) => { console.error(String(e && e.stack || e)); process.exit(1) });

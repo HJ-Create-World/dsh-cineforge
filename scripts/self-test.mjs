@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// CineForge · 离线自检（零依赖、零网络、零 CLI） v0.4.0（含 Cordis Proxy 回归 + 参考片分析纯函数）
+// CineForge · 离线自检（零依赖、零网络、零 CLI） v0.4.1（含 Cordis Proxy 回归 + 参考片分析 + 工作台能动）
 // 用法：node scripts/self-test.mjs
 // 校验：插件清单 / 补丁 / 3 技能 frontmatter 与注册 / health 工具 / 知识库 JSON / 卡库 /
 //       编译确定性（8 文件 + 复制资产）/ v2 manifest 契约 / 音频与 AIGC / 单一事实源。
@@ -58,7 +58,7 @@ async function main() {
   check("engines.dsh", pkg.engines && pkg.engines.dsh === ">=0.2.2-rc.3");
   check("license Apache-2.0", pkg.license === "Apache-2.0");
   // v0.4.0 工作台：客户端半身与槽位契约（依据 dsh-config-sync-plugin/client.js 头注释）
-  check("package.json version 0.4.0", pkg.version === "0.4.0", pkg.version);
+  check("package.json version 0.4.1", pkg.version === "0.4.1", pkg.version);
   check("exports[\"./client\"]", pkg.exports && pkg.exports["./client"] === "./lib/client.js");
   check("dsh.client web", pkg.dsh && pkg.dsh.client && pkg.dsh.client.platform === "web");
   check("dsh.client.inject 为字符串数组", Array.isArray(pkg.dsh.client.inject) && pkg.dsh.client.inject.every((x) => typeof x === "string"));
@@ -283,13 +283,61 @@ async function main() {
     try { rmSync(t2, { recursive: true, force: true }); } catch (e) {}
   }
 
+  // ── v0.4.1 能动：animatic / lint / gate / 客户端交互 ──────────────────
+  const { buildAnimatic, canvasOf, wrapText, timelineOf, ANIMATIC_FPS } = await import("../lib/animatic.mjs");
+  const { lintStoryboard, settleDuration } = await import("../lib/lint.mjs");
+  check("animatic fps 24", ANIMATIC_FPS === 24);
+  check("animatic 画布 9:16", canvasOf("9:16").w === 540 && canvasOf("9:16").h === 960 && canvasOf("9:16").portrait === true);
+  check("animatic 画布 16:9", canvasOf("16:9").w === 960 && canvasOf("16:9").h === 540);
+  check("animatic 画布默认横屏", canvasOf("").w === 960);
+  check("wrapText 中文按字折行", wrapText("一二三四五六七八九十", 5).length >= 2);
+  check("wrapText 空串返回空数组", Array.isArray(wrapText("", 10)) && wrapText("", 10).length === 0);
+  const tl = timelineOf({ project: { fps: 30 }, shots: [
+    { id: "a", duration_f: 90 }, { id: "b", duration_f: 60 }, { id: "c", duration_f: 30, from: 200 },
+  ] });
+  check("timeline 累计 from", tl.shots[0].start_s === 0 && tl.shots[1].start_s === 3);
+  check("timeline 尊重显式 from", tl.shots[2].start_s === 200 / 30);
+  check("timeline 总长取 max", Math.abs(tl.total_s - 230 / 30) < 0.01, String(tl.total_s));
+  // lint：结构判据
+  const lintBase = { project: { fps: 30 }, shots: [
+    { card_id: "a", duration_f: 90, primitive: "fade", category: "opening", energy: "low" },
+    { card_id: "b", duration_f: 90, primitive: "fade", category: "typography", energy: "mid" },
+  ] };
+  const l1 = lintStoryboard(lintBase, { a: {}, b: {} });
+  check("lint 无 error 时通过", l1.passed === true && l1.summary.errors === 0, JSON.stringify(l1.summary));
+  const l2 = lintStoryboard({ project: { fps: 30 }, shots: [{ card_id: "", duration_f: 0 }] }, {});
+  check("lint 空卡 + 零时长 = 2 error", l2.passed === false && l2.summary.errors >= 2, JSON.stringify(l2.summary));
+  check("lint 空分镜 = error", lintStoryboard({ shots: [] }, {}).passed === false);
+  check("settleDuration 夹在 0.32–0.62", settleDuration(1) === 0.32 && settleDuration(10) === 0.62);
+  // 客户端交互符号
+  const cl = readFileSync(join(ROOT, "lib", "client.js"), "utf8");
+  check("client 有重排函数", cl.indexOf("function reflowShots") >= 0);
+  check("client 拖拽事件", cl.indexOf("onDragStart") >= 0 && cl.indexOf("text/cfw-shot") >= 0);
+  check("client 库卡拖入", cl.indexOf("text/cfw-card") >= 0 && cl.indexOf("putCard") >= 0);
+  check("client 拉时长", cl.indexOf("onResizeStart") >= 0 && cl.indexOf("pxPerFrame") >= 0);
+  check("client 409 冲突面板", cl.indexOf("ConflictPanel") >= 0 && cl.indexOf("CONFLICT") >= 0);
+  check("client 体检面板", cl.indexOf("LintPanel") >= 0);
+  check("client 防抖保存", cl.indexOf("saveTimer") >= 0 && cl.indexOf("baseRev") >= 0);
+  check("client 放行按钮接线", cl.indexOf("onGate") >= 0 && cl.indexOf("LINT_BLOCKED") >= 0);
+  // 服务端路由符号
+  const rt = readFileSync(join(ROOT, "lib", "server", "routes.mjs"), "utf8");
+  check("routes 导出 animatic/lint/gate", rt.indexOf("postAnimatic") >= 0 && rt.indexOf("postLint") >= 0 && rt.indexOf("postGate") >= 0);
+  const svc = readFileSync(join(ROOT, "lib", "server", "workbench-service.mjs"), "utf8");
+  check("service 注册三条新路由", svc.indexOf('"/animatic"') >= 0 && svc.indexOf('"/lint"') >= 0 && svc.indexOf('"/gate"') >= 0);
+  check("compile 版本号 0.4.1", readFileSync(join(ROOT, "scripts", "compile-hf.mjs"), "utf8").indexOf('compiler_version: "0.4.1"') >= 0);
+  // CLI 的 --animatic 通道（不真跑 ffmpeg，只验参数解析与接线存在）
+  const cph = readFileSync(join(ROOT, "scripts", "compile-hf.mjs"), "utf8");
+  check("compile CLI 支持 --animatic", cph.indexOf('"--animatic"') >= 0 && cph.indexOf("buildAnimatic") >= 0);
+  check("client C 区有区块头", cl.indexOf("C · 资源库") >= 0);
+  check("client 保存串行化", cl.indexOf("savingRef") >= 0 && cl.indexOf("againRef") >= 0);
+
   const failed = results.filter((r) => !r.ok);
   const summary = {
     ok: failed.length === 0,
     schema: "cineforge/self-test/v1",
     plugin: pluginName,
     inject,
-    version: "0.4.0",
+    version: "0.4.1",
     total: results.length,
     passed: results.length - failed.length,
     failed,

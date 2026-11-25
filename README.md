@@ -5,11 +5,11 @@
 
 GitHub：[HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-cineforge) · 上游：[video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft)（Apache-2.0）
 
-## 当前状态：runtime 0.4.0（工作台骨架 · 参考片分析转正 · 已装进本机 DSH）
+## 当前状态：runtime 0.4.1（工作台能动 · animatic 预览 · 分镜体检与放行 · 已装进本机 DSH）
 
-> 设计阶段（0.1.0-design）2026-11-24 经用户批准；0.2.0 完成运行时接线；0.3.0 按独立终检【打回】做了一期返工；0.3.2 清掉二次终检的 P1/P2 返工项；**0.4.0 落地 C 阶段（参考片分析转正）+ A 阶段（工作台骨架，只读）** —— 插件从「只有对话内技能」变成「对话技能 + 侧栏工作台面板」，并新增两条零依赖 CLI（`analyze` / `extract-template`），自检 97 → **129/129**。
+> 设计阶段（0.1.0-design）2026-11-24 经用户批准；0.2.0 完成运行时接线；0.3.0 按独立终检【打回】做了一期返工；0.3.2 清掉二次终检的 P1/P2 返工项；0.4.0 落地 C 阶段（参考片分析转正）+ A 阶段（工作台骨架，只读），自检 97 → 129；**0.4.1 把工作台从只读变成能动** —— 拖拽重排 / 拉时长 / 从镜头库拖卡 / animatic 预览片（2.3 秒出片）/ 分镜体检 / 确认放行 / 409 冲突面板，自检 **156/156**。
 
-`[0.4.0]` 之后接着做 0.4.1（工作台能动：拖拽重排 / 拉时长 / animatic 播放 / 确认放行）与 0.4.2（收口：静帧验收墙 / 终检可视化 / 发布确认弹窗），再做 0.5.0（五条新需求界面：AI 自动分镜 + 局部改、GOAL 模式与软硬门、参考视频导入、流程存模板、明暗双主题）。
+`[0.4.1]` 之后接着做 0.4.2（收口：静帧验收墙 / 终检可视化 / 发布确认弹窗 / 未保存拦截 / 只读锁定），再做 0.5.0（五条新需求界面：AI 自动分镜 + 局部改、GOAL 模式与软硬门、参考视频导入、流程存模板、明暗双主题）。
 
 > 「二次独立终检结论」与「独立终检结论」两节保留为历史判定与整改依据。
 
@@ -19,13 +19,19 @@ GitHub：[HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-
 | 分镜编译 | `scripts/compile-hf.mjs`：`cineforge/storyboard/v1` → HyperFrames standalone（8 文件 + 本地 GSAP / 音频资产） | `hyperframes@0.9.88 check`：**0 error / 10 warning**（layout / motion / contrast / audio 全组 0/0；7 条结构 lint 属二期子组合 + 3 条 craft line_unread 短句可读性），均非阻断 |
 | 静帧验收 | `scripts/verify-hf.mjs`：check + 最多 6 时间点 snapshot + contact-sheet | 7 帧 png 全非零、`ok=true`、`empty_frames=0`；二次独立终检【有条件通过】（仅内部归档口径），见下 |
 | 成片渲染 | `hyperframes@0.9.88 render` | `examples/demo-project.json` → `renders/cineforge-demo-01_2026-11-25_14-12-40.mp4`；ffprobe：H.264 / 1080×1920 / 30fps / **600 帧 / 20.0s / 5.1MB** + **AAC 48kHz 立体声**；`hyperframes audio --json`：**−19.6 LUFS / −1.3 dBTP / 0 clipping**（峰值时刻 17.745s 落在 s06 收尾 impact，已测量、未试听） |
-| 离线自检 | `scripts/self-test.mjs`（零 CLI、零网络） | **129/129**，含两次编译 10 个产物逐字节 sha256 相同 |
+| 离线自检 | `scripts/self-test.mjs`（零 CLI、零网络） | **156/156**，含两次编译 10 个产物逐字节 sha256 相同 |
 | 本机接线 | `scripts/install-local.mjs`：status / install / uninstall / verify，幂等、可回滚、默认 dry-run | 隔离 profile install→幂等→uninstall 全通过；live profile 已安装且技能注册 32/32 |
 | **参考片分析** | `scripts/analyze.mjs` + `lib/reference-analysis.mjs` / `lib/style-fingerprint.mjs`：切镜、关键帧、拼图、调色板、明暗、运动、BPM | 20s demo：6 镜 / 18 帧 / BPM 130（真值 129）；304.8s 参考片：76 镜 / 228 帧 / 14.96 切每分 / BPM 139.5（三段稳定性 spread 0） |
 | **模板提取** | `scripts/extract-template.mjs` + `lib/template-extract.mjs`：`cineforge/template/v1`，四层（风格 / 结构 / 动效 / 声音）+ slots | 真实参考片 → `knowledge/templates/template-world-search.json`，5 段结构 + 15/20/30/45s 缩放提案；`motion.cards` 恒空并标 `needs_review`（不假装能反解动效） |
-| **工作台（0.4.0 只读）** | `lib/client.js`（侧栏一行 + 配对 main 面板）+ `lib/server/`（8 端点，rev CAS） | `/health`、`/projects`、`/project`、`/cards`、`/templates`、`/asset` 全部实测 200；客户端 bundle 已被宿主 compose（55942 B），侧栏「影铸工作台」经 UIA 确认存在 |
+| **工作台（0.4.1 能动）** | `lib/client.js`（侧栏一行 + 配对 main 面板）+ `lib/server/`（11 端点，rev CAS）+ `lib/animatic.mjs` + `lib/lint.mjs` | `/health`、`/projects`、`/project`、`/cards`、`/templates`、`/asset`、`/lint`、`/animatic`、`/gate` 全部实测 200；20s 工程 animatic `build_ms 2300`；组件级渲染冒烟 `MISS []` |
 
-**GUI**：0.4.0 起本插件**带图形界面** —— 左侧栏「影铸工作台」一行 + 配对主面板（三栏：A 输入源 / B 分镜 / C 镜头库）。本版**只读**：读工程、看分镜与镜头库；拖拽重排、拉时长、animatic 播放、确认放行在 0.4.1。
+**GUI**：左侧栏「影铸工作台」一行 + 配对主面板（三栏：A 输入源 / B 分镜 / C 资源库）。**0.4.1 起可编辑**：
+
+- **B 区**：拖动卡片重排分镜；拖卡片右边缘改单镜时长；从 C 区镜头库把卡拖进分镜板（空白处追加 / 丢到某镜上替换）；每改一次立刻本地生效，500ms 后自动存盘。
+- **animatic**：点「生成预览」出 540×960 低分辨率预览片，画面是定妆帧、**时间线与声音是真的**，用来在花 4 分钟渲染之前先听节奏对不对。
+- **分镜体检**：`/lint` 实时跑，error 级问题会挡住「确认放行」。
+- **确认放行**：写 `gates.storyboard` 并把阶段推到 `assets`；可「撤回放行」退回可改状态。
+- **409 冲突**：服务端 rev 变了会弹面板让人选「用服务端的 / 用我的覆盖 / 先不动」，服务端绝不自动 merge。
 
 > 无法用桌面自动化点开面板截图：宿主策略拒绝向 DSH 自身窗口发送任何桌面输入（`WCU_POLICY_DENIED / HOST_INPUT_DENIED`），UI 验收只能靠 HTTP 端点 + 用户目视。这是宿主的安全边界，不是插件缺陷。
 
@@ -35,7 +41,7 @@ GitHub：[HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-
 
 ```bash
 # 0. 离线自检（零依赖，秒级）
-npm test                         # scripts/self-test.mjs：129/129
+npm test                         # scripts/self-test.mjs：156/156
 
 # 0b. 参考片分析（需要 ffmpeg；本机已装 8.1.1，脚本会自动探测）
 npm run analyze -- doctor                              # 探测 ffmpeg / ffprobe
@@ -47,6 +53,10 @@ npm run extract-template -- <参考片.mp4> --id my-style   # 出 cineforge/temp
 
 # 2. 编译成 HyperFrames 工程（零依赖 ESM，输出 8 文件 + assets/ 到 out/<id>/）
 node scripts/compile-hf.mjs --project examples/demo-project.json --out out/cineforge-demo-01
+
+# 2b. 出 animatic 预览片（低分辨率 / 静帧驱动 / 时间线与声音真实；需要 ffmpeg）
+node scripts/compile-hf.mjs --project examples/demo-project.json --animatic --out out/cineforge-demo-01
+#    产物 out/<id>/animatic/animatic.mp4（20s 片约 2–3 秒出片）
 
 # 3. 静帧验收（check + snapshot + 拼图，自动出 JSON 报告）
 node scripts/verify-hf.mjs --out out/cineforge-demo-01
@@ -132,7 +142,7 @@ curl -H 'Origin: http://127.0.0.1:<port>' http://127.0.0.1:<port>/dsh-cineforge/
 ## 规格
 
 - **类型**：DSH 插件（npm 包 + `cordis.patch.yml` + `ctx.skills.register`），非独立应用
-- **版本 / 状态**：0.4.0 / runtime + workbench（已接线、已装进本机 DSH，可跑通到带声 MP4；工作台 0.4.0 为只读骨架；成片仍 NOT FOR PUBLISH）
+- **版本 / 状态**：0.4.1 / runtime + workbench（已接线、已装进本机 DSH，可跑通到带声 MP4；工作台 0.4.1 可编辑并可出 animatic；成片仍 NOT FOR PUBLISH）
 - **主渲染后端**：HyperFrames（DSH 内置 `dsh-hyperframes` 0.14.1；CLI 钉 `hyperframes@0.9.88`），运行时依赖，不 vendor
 - **次渲染后端**：Remotion（自定 License，仅用于复刻上游调校过的 TSX 镜头，**本插件不分发**）
 - **上游**：[video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft)，Apache-2.0，作者 Wei Yihao，锁定 SHA `59f3e9b9e936ff2bce0e18446226d770a3f2f61f`
