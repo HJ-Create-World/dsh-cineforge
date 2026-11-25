@@ -1,7 +1,7 @@
 {
   "name": "CineForge",
   "cn_name": "影铸 · AI 视频导演台",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "type": "dsh-plugin",
   "status": "runtime",
   "repository": "https://github.com/HJ-Create-World/dsh-cineforge",
@@ -47,27 +47,27 @@
     "deterministic": true,
     "seed": 20261124,
     "primitive_policy": "shot.primitive is authoritative (SHOTS single source); transition_in/category are fallback only",
-    "layouts": 6,
+    "layouts": 8,
     "gsap_vendor": "lib/vendor/gsap.min.js (gsap 3.15.0, local, no CDN)",
     "registry_pin": "45846f1e6d5609462d29652315d0d4254fe92c24",
-    "installed_profile": "desktop (live, 27/27 verified)",
+    "installed_profile": "desktop (live, 32/32 verified)",
     "demo_render": {
       "source": "examples/demo-project.json",
-      "output": "out/cineforge-demo-01/renders/cineforge-demo-01.mp4",
+      "output": "out/cineforge-demo-01/renders/cineforge-demo-01_2026-11-25_14-12-40.mp4",
       "codec": "h264",
       "width": 1080,
       "height": 1920,
       "fps": 30,
       "frames": 600,
       "duration_s": 20,
-      "bytes": 3124733,
+      "bytes": 5095058,
       "audio": "aac / 48000 Hz / stereo",
-      "audio_measurement": "lufsIntegrated -19.4 / truePeakDb -1.2 / clipping 0 (measured, not listened)"
+      "audio_measurement": "lufsIntegrated -19.6 / truePeakDb -1.3 / clipping 0 / peak moment 17.745s (0.3.2 film, measured, not listened)"
     },
     "verification": {
-      "self_test": "86/86",
-      "install_verify": "27/27 (isolated npm pack install + live desktop profile)",
-      "hf_check": "0 error / 0 warning in layout, motion, contrast, craft, audio; 7 structure lint warnings (subcomposition, phase 2)",
+      "self_test": "97/97",
+      "install_verify": "32/32 (isolated npm pack install + live desktop profile; 5 Cordis/Proxy regression checks added in 0.3.1)",
+      "hf_check": "0 error / 10 warning (7 structure lint subcomposition phase-2 + 3 craft line_unread); layout/motion/contrast/audio all 0/0",
       "static_frames": "7 snapshots, all non-zero bytes, contact-sheet reviewed by eye",
       "film_render": "600/600 frames, hasAudio true, 4m 23.3s"
     }
@@ -118,5 +118,31 @@
     "P2: 9:16 font-size thresholds conflict; 8 failing rules have no conscious-violation record",
     "P2: out/ artifacts carry local absolute paths (verify 11, video-state 84, check 7); out/ is gitignored, sanitize only if exporting the whole folder",
     "P3: 7 lint warnings (subcomposition, phase 2), abstract slogan, no narration/hard subtitles"
-  ]
+  ],
+  "qa_032_rework": {
+    "basis": "docs/QA-一期返工终检报告.md (27 rules, 8 failing) + docs/QA-音频工程实测报告.md",
+    "date": "2026-11-25",
+    "version": "0.3.2",
+    "cleared": [
+      "Q5: hero layout — single-subject opening with spotlight/push/float/rim-light/settle arc",
+      "Q8: outro-finale layout — 4-direction fly-in group photo, stage beam, 12 deterministic sparks, wordmark hold",
+      "Q10: mini-card .meta uses --small-px (37px), nowrap + ellipsis, no mid-word wrap; 3 cards reflowed to full-width flex row",
+      "Q11: 37px >= 32px floor; 9:16 vs 5.2% frame-height conflict documented in docs/视觉规范与口径.md",
+      "S4: per-shot-end SFX trim (impact-cine no longer crosses s01 3s); 12-clip peak-aligned foley incl. per-row checklist and metric lock",
+      "S5: AAC priming / per-file peak lag measured; from_s = peak_f/fps - peak_offset_s - OUTPUT_OFFSET_S in compiler; manifest.audio_alignment records formula + evidence",
+      "C2: s02 slogan replaced with concrete product benefit (124 cards / confirm storyboard before render)",
+      "Q1(partial): header rule + bottom info band + right ruler fill the pb blank; real screenshots still a documented conscious violation"
+    ],
+    "still_open": [
+      "S1: human blind listening not done — objective LUFS/NCC/silencedetect only (audio-lab report §8)",
+      "with/without-BGM two versions not rendered (in-memory amix reconstruction used instead, honestly noted)",
+      "publish.ai_disclosure explicit+implicit still false, publish_allowed:false, NOT FOR PUBLISH held deliberately",
+      "out/ artifacts carry local absolute paths but are gitignored and never pushed",
+      "P3: 7 structure lint warnings (subcomposition), no narration/hard subtitles, no per-card 124 mapping, no GUI workbench"
+    ],
+    "on_screen_legal_word_check": "clean (0 hits)",
+    "compiler_version": "0.3.2",
+    "sfx_clips": 12,
+    "audio_alignment_evidence": "docs/QA-音频工程实测报告.md"
+  }
 }

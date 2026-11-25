@@ -20,7 +20,7 @@
 |---|---|---|---|
 | 1 | `package.json` 声明 `dsh.bundle.patch` | ✓ | `package.json` 已有 `dsh.bundle.patch = ./cordis.patch.yml`。CI 从仓库根或 `packages/` `plugins/` `apps/` 子包读 package.json；只声明 `dsh.client` 会被拒（最常见被拒原因）。 |
 | 2 | 仓库根有 `cordis.patch.yml` | ✓ | 已存在且含 `- insert: - id: cineforge-skills`；须在 `main` 分支可见（当前 `origin/main = 275e10b`）。 |
-| 3 | 真实可用代码 | ✓ | `lib/`、`scripts/`、`skills/`、`knowledge/` 均有实现；离线自检 **86/86**、隔离与 live 安装 **27/27**、示例已渲出带声 MP4（`check` 0 error / 0 warning）。非占位 / 纯 README。 |
+| 3 | 真实可用代码 | ✓ | `lib/`、`scripts/`、`skills/`、`knowledge/` 均有实现；离线自检 **97/97**、隔离与 live 安装 **32/32**、示例已渲出带声 MP4（0.3.2：`check` 0 error / 10 warning，其中 3 条 craft line_unread、7 条结构 lint，均属非阻断）。非占位 / 纯 README。 |
 | 4 | 仓库创建满 1 天 | ✗ | `created_at = 2026-11-24T08:32:43Z`；CI 自动查，无提交数门槛（见 #4196）；差一点做完再提，重提不扣分。 |
 | 5 | GitHub 仓库加 `dsh-plugin` topic | ✓ | 已实测写入：`PUT repos/HJ-Create-World/dsh-cineforge/topics` 返回 names=["dsh","dsh-plugin","hyperframes","motion-design","storyboard","video","video-shotcraft"]。 |
 | 6 | 描述只说功能、无营销词、必须属实 | ⚠️ | 投稿草稿 `description.en` 已按此写（客观功能、句号结尾）；**提交前必须逐条对代码复核数字与 API 名称**。另：远端 GitHub 仓库 description 目前含「Opus 级设计感」营销词，建议清理（非收录硬门，但人工评审会读到目标仓库）。 |

@@ -41,16 +41,15 @@
       "transition_in": "fade",
       "transition_out": "cut",
       "intent": "品牌开场",
-      "action": "字标落定",
+      "action": "单主体聚光五段弧：聚光 → 推近 → 悬浮 → 描边光 → 归位",
       "energy": "low",
-      "layout": "title",
+      "layout": "hero",
       "primitive": "crash-zoom",
       "backend": "hyperframes",
       "caption": "影铸 CineForge",
       "copy": {
         "title": "影铸\nCineForge",
-        "sub": "想法，到成片。",
-        "foot": "AI 生成 · 影铸 CineForge"
+        "sub": "把想法，变成可确认的分镜"
       },
       "sfx_cue": "impact-cine"
     },
@@ -68,10 +67,10 @@
       "layout": "quote",
       "primitive": "slide-up",
       "backend": "hyperframes",
-      "caption": "普通模型，也能有导演级设计感",
+      "caption": "124 张配方卡，先定分镜，再开机",
       "copy": {
-        "title": "普通模型\n也能有导演级设计感",
-        "sub": "先定分镜，再开机。",
+        "title": "124 张配方卡\n先定分镜，再开机",
+        "sub": "选卡即定动效，逐镜可改。",
         "foot": "分镜先行 · 不用懂剪辑"
       },
       "sfx_cue": "whoosh-fast"
@@ -167,7 +166,7 @@
         "sub": "先看一眼，再拍。",
         "foot": "来自 video-shotcraft gallery"
       },
-      "sfx_cue": "swoosh-quick"
+      "sfx_cue": "transition-soft + click-camera"
     },
     {
       "id": "s06",
@@ -178,15 +177,15 @@
       "transition_in": "hidden-cut",
       "transition_out": "end",
       "intent": "收尾合影与品牌锁定",
-      "action": "品牌字标 hold + 进度条推进",
+      "action": "四方飞入合影 + 舞台光 + 12 粒子 + 字标落定 hold",
       "energy": "peak",
-      "layout": "outro",
+      "layout": "outro-finale",
       "primitive": "hold",
       "backend": "hyperframes",
-      "caption": "CineForge · 开源",
+      "caption": "CineForge · 影铸 —— 收尾合影",
       "copy": {
         "title": "CineForge · 影铸",
-        "sub": "成片归你，免费商用。",
+        "sub": "分镜、动效、成片，都可再改。",
         "foot": "一句话，开拍。"
       },
       "sfx_cue": "impact-cine"
@@ -211,33 +210,75 @@
     "sfx": [
       {
         "file": "impact-cine.mp3",
-        "at": 0,
-        "volume": 0.85
+        "peak_f": 18,
+        "volume": 0.85,
+        "action": "s01 字标 crash-zoom 重击，裁在 3.000s 镜末不拖进 s02"
       },
       {
         "file": "whoosh-fast.mp3",
-        "at": 3,
-        "volume": 0.7
+        "peak_f": 112,
+        "volume": 0.7,
+        "action": "s02 标语推入风声"
       },
       {
         "file": "transition-snap.mp3",
-        "at": 6,
-        "volume": 0.8
+        "peak_f": 186,
+        "volume": 0.8,
+        "action": "s03 卡1 运镜落定"
+      },
+      {
+        "file": "transition-snap.mp3",
+        "peak_f": 195,
+        "volume": 0.72,
+        "action": "s03 卡2 字排落定"
+      },
+      {
+        "file": "transition-snap.mp3",
+        "peak_f": 201,
+        "volume": 0.64,
+        "action": "s03 卡3 转场落定"
       },
       {
         "file": "click-camera.mp3",
-        "at": 10,
-        "volume": 0.85
+        "peak_f": 306,
+        "volume": 0.85,
+        "action": "s04 行1 文案已定稿"
       },
       {
-        "file": "swoosh-quick.mp3",
-        "at": 14,
-        "volume": 0.75
+        "file": "click-camera.mp3",
+        "peak_f": 318,
+        "volume": 0.85,
+        "action": "s04 行2 分镜已排布"
+      },
+      {
+        "file": "click-camera.mp3",
+        "peak_f": 330,
+        "volume": 0.55,
+        "action": "s04 行3 动效待确认（更轻，不闭合）"
+      },
+      {
+        "file": "transition-soft.mp3",
+        "peak_f": 435,
+        "volume": 0.6,
+        "action": "s05 数字滚动底"
+      },
+      {
+        "file": "click-camera.mp3",
+        "peak_f": 444,
+        "volume": 0.45,
+        "action": "s05 跳数轻 tick"
+      },
+      {
+        "file": "click-camera.mp3",
+        "peak_f": 456,
+        "volume": 0.85,
+        "action": "s05 「150」落定锁死"
       },
       {
         "file": "impact-cine.mp3",
-        "at": 17,
-        "volume": 0.9
+        "peak_f": 530,
+        "volume": 0.9,
+        "action": "s06 品牌锁定收尾重击"
       }
     ],
     "voiceover": []

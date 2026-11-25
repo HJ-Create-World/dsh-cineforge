@@ -5,18 +5,18 @@
 
 GitHub：[HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-cineforge) · 上游：[video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft)（Apache-2.0）
 
-## 当前状态：runtime 0.3.0（返工版 · 已接线 · 已装进本机 DSH）
+## 当前状态：runtime 0.3.2（P1/P2 返工版 · 已接线 · 已装进本机 DSH）
 
-> 设计阶段（0.1.0-design）2026-11-24 经用户批准；0.2.0 完成运行时接线；**0.3.0 按独立终检【打回】做了一期返工**（音轨 + 两个功能镜头 + 发布合规 + 14 条工程缺陷）。0.2.0 终检报告作为历史归档保留，见文末。
+> 设计阶段（0.1.0-design）2026-11-24 经用户批准；0.2.0 完成运行时接线；0.3.0 按独立终检【打回】做了一期返工；**0.3.2 清掉二次终检的 P1/P2 返工项**（Q5 单主体开场 / Q8 收尾合影 / Q10 Q11 出版级字高 / S4 逐镜拟音 / S5 音轨峰值补偿 / C2 具体文案），自检 97/97。下方「二次独立终检结论」是 0.3.0 的历史判定，保留作整改依据。
 
 | 能力 | 落地 | 实测结果 |
 |---|---|---|
-| 技能注册 | `lib/index.js` + `lib/skill-loader.js`：3 技能经 `ctx.skills.register` 注册，`resourceBase` 指向插件根 | `scripts/self-test.mjs` **86/86**；隔离 `npm pack` → install → 真实 import 27/27；**已装进 live `desktop` profile 并 27/27 复核** |
-| 分镜编译 | `scripts/compile-hf.mjs`：`cineforge/storyboard/v1` → HyperFrames standalone（8 文件 + 本地 GSAP / 音频资产） | `hyperframes@0.9.88 check`：**0 error / 0 warning**（layout / motion / contrast / craft / audio 全组归零）；仅 7 条结构 lint warning 属二期子组合 |
+| 技能注册 | `lib/index.js` + `lib/skill-loader.js`：3 技能经 `ctx.skills.register` 注册，`resourceBase` 指向插件根 | `scripts/self-test.mjs` **97/97**；隔离 `npm pack` → install → 真实 import 32/32；**已装进 live `desktop` profile 并 32/32 复核** |
+| 分镜编译 | `scripts/compile-hf.mjs`：`cineforge/storyboard/v1` → HyperFrames standalone（8 文件 + 本地 GSAP / 音频资产） | `hyperframes@0.9.88 check`：**0 error / 10 warning**（layout / motion / contrast / audio 全组 0/0；7 条结构 lint 属二期子组合 + 3 条 craft line_unread 短句可读性），均非阻断 |
 | 静帧验收 | `scripts/verify-hf.mjs`：check + 最多 6 时间点 snapshot + contact-sheet | 7 帧 png 全非零、`ok=true`、`empty_frames=0`；二次独立终检【有条件通过】（仅内部归档口径），见下 |
-| 成片渲染 | `hyperframes@0.9.88 render` | `examples/demo-project.json` → `renders/cineforge-demo-01.mp4`；ffprobe：H.264 / 1080×1920 / 30fps / **600 帧 / 20.0s / 3.0MB** + **AAC 48kHz 立体声**；`hyperframes audio --json`：−19.4 LUFS / −1.2 dBTP / 0 clipping（已测量、未试听） |
-| 离线自检 | `scripts/self-test.mjs`（零 CLI、零网络） | 86/86，含两次编译 10 个产物逐字节 sha256 相同 |
-| 本机接线 | `scripts/install-local.mjs`：status / install / uninstall / verify，幂等、可回滚、默认 dry-run | 隔离 profile install→幂等→uninstall 全通过；live profile 已安装且技能注册 27/27 |
+| 成片渲染 | `hyperframes@0.9.88 render` | `examples/demo-project.json` → `renders/cineforge-demo-01_2026-11-25_14-12-40.mp4`；ffprobe：H.264 / 1080×1920 / 30fps / **600 帧 / 20.0s / 5.1MB** + **AAC 48kHz 立体声**；`hyperframes audio --json`：**−19.6 LUFS / −1.3 dBTP / 0 clipping**（峰值时刻 17.745s 落在 s06 收尾 impact，已测量、未试听） |
+| 离线自检 | `scripts/self-test.mjs`（零 CLI、零网络） | 97/97，含两次编译 10 个产物逐字节 sha256 相同 |
+| 本机接线 | `scripts/install-local.mjs`：status / install / uninstall / verify，幂等、可回滚、默认 dry-run | 隔离 profile install→幂等→uninstall 全通过；live profile 已安装且技能注册 32/32 |
 
 **GUI**：本版是**对话内技能**，无图形界面（独立视频创作工作台排二期）。插件无 `dsh.client` / `./client` 导出。
 
@@ -26,7 +26,7 @@ GitHub：[HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-
 
 ```bash
 # 0. 离线自检（零依赖，秒级）
-npm test                         # scripts/self-test.mjs：86/86
+npm test                         # scripts/self-test.mjs：97/97
 
 # 1. 分镜源：examples/demo-project.json（cineforge/storyboard/v1，抖音 9:16，6 镜 20s）
 #    真实使用由 cineforge-director 技能在对话中产出，并须经过分镜确认门
@@ -102,7 +102,7 @@ node scripts/install-local.mjs uninstall --apply    # 一键回滚
 ## 规格
 
 - **类型**：DSH 插件（npm 包 + `cordis.patch.yml` + `ctx.skills.register`），非独立应用
-- **版本 / 状态**：0.3.0 / runtime（返工版，已接线、已装进本机 DSH，可跑通到带声 MP4）
+- **版本 / 状态**：0.3.2 / runtime（P1/P2 返工版，已接线、已装进本机 DSH，可跑通到带声 MP4；成片仍 NOT FOR PUBLISH）
 - **主渲染后端**：HyperFrames（DSH 内置 `dsh-hyperframes` 0.14.1；CLI 钉 `hyperframes@0.9.88`），运行时依赖，不 vendor
 - **次渲染后端**：Remotion（自定 License，仅用于复刻上游调校过的 TSX 镜头，**本插件不分发**）
 - **上游**：[video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft)，Apache-2.0，作者 Wei Yihao，锁定 SHA `59f3e9b9e936ff2bce0e18446226d770a3f2f61f`
@@ -165,7 +165,7 @@ node -e "const j=require('./knowledge/shot-cards.json');console.log(j.card_count
 普通模型做视频翻车，通常不是不会写代码，而是没有导演判断：方向没定就开渲、动效堆满每一帧、开场多主角群舞、品牌字标一闪而过。上游 video-shotcraft 把这些判断沉淀成了 124 张配方卡和一套判例式审美准则。CineForge 把这份「品味」抽出来，做成与渲染引擎无关的知识层，再套上一层带确认节点的导演状态机，最后落到 HyperFrames 上执行。
 
 详见 [设计总纲](docs/design/2026-11-24-cineforge-design.md)。
-## 二次独立终检结论（0.3.0，2026-11-25 · 当前口径）
+## 二次独立终检结论（0.3.0，2026-11-25 · 历史判定，0.3.2 的整改依据）
 
 完整报告：[docs/QA-一期返工终检报告.md](docs/QA-一期返工终检报告.md)（干净上下文独立 subagent，8 份材料亲自 read / read_image，含全分辨率复核小字）。
 

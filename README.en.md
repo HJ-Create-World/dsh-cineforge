@@ -4,20 +4,20 @@ CineForge is a DSH plugin that provides in-chat skills for turning a brief into 
 
 GitHub: [HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-cineforge) · Upstream: [video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft) (Apache-2.0)
 
-> This README describes what is actually implemented in 0.3.0. It does not claim features planned for later phases. For the full Chinese README, see [README.md](README.md).
+> This README describes what is actually implemented in 0.3.2 (the P1/P2 rework; the 0.3.0 second-review verdict below is the historical basis for it). It does not claim features planned for later phases. For the full Chinese README, see [README.md](README.md).
 
-## Current status: runtime 0.3.0 (reworked; wired; installed into the live DSH profile)
+## Current status: runtime 0.3.2 (P1/P2 rework; wired; installed into the live DSH profile)
 
-The design phase (0.1.0-design) was closed on 2026-11-24; 0.2.0 wired the runtime; **0.3.0 reworked the phase-1 demo film after an independent final review returned "rework"** (audio track, two functional shots, AI-label metadata and 14 engineering / contract defects).
+The design phase (0.1.0-design) was closed on 2026-11-24; 0.2.0 wired the runtime; 0.3.0 reworked the phase-1 demo film after an independent final review returned "rework"; **0.3.2 cleared the second review's P1/P2 backlog** (single-subject opening, group-photo finale, publication-grade type scale, per-shot foley, measured audio peak compensation, concrete copy). Offline self-test 97/97. The second-review verdict below is the historical 0.3.0 basis for the rework.
 
 | Capability | Implementation | Measured result |
 |---|---|---|
-| Skill registration | `lib/index.js` + `lib/skill-loader.js`: 3 skills registered via `ctx.skills.register`, `resourceBase` points to the plugin root | `scripts/self-test.mjs` **86/86**; isolated install (`npm pack` → `npm install` → real import) 27/27; **live `desktop` profile 27/27** |
-| Storyboard compilation | `scripts/compile-hf.mjs` compiles `cineforge/storyboard/v1` into a HyperFrames standalone composition (8 files + local GSAP / audio assets) | `hyperframes@0.9.88 check`: **0 error / 0 warning** in layout, motion, contrast, craft and audio; only 7 structural lint warnings (phase-2 sub-compositions) |
+| Skill registration | `lib/index.js` + `lib/skill-loader.js`: 3 skills registered via `ctx.skills.register`, `resourceBase` points to the plugin root | `scripts/self-test.mjs` **97/97**; isolated install (`npm pack` → `npm install` → real import) 32/32; **live `desktop` profile 32/32** |
+| Storyboard compilation | `scripts/compile-hf.mjs` compiles `cineforge/storyboard/v1` into a HyperFrames standalone composition (8 files + local GSAP / audio assets) | `hyperframes@0.9.88 check`: **0 error / 10 warning** (layout / motion / contrast / audio all 0/0; 7 structural lint warnings for phase-2 sub-compositions + 3 craft line_unread short-line readability); none blocking |
 | Frame verification | `scripts/verify-hf.mjs`: check-report parsing + up to 6 snapshots + contact sheet | 7 PNG frames all non-zero bytes, `ok=true` |
-| Film render | `npx --yes hyperframes@0.9.88 render` | `examples/demo-project.json` → `renders/cineforge-demo-01.mp4`; ffprobe: H.264 / 1080×1920 / 30fps / **600 frames / 20.0s / 3.0MB** + **AAC 48kHz stereo**; `hyperframes audio --json`: −19.4 LUFS / −1.2 dBTP / 0 clipping (measured, not listened) |
-| Offline self-test | `scripts/self-test.mjs` (zero CLI, zero network) | 86/86, including byte-identical sha256 across two compilations of 10 artifacts (deterministic render) |
-| Local DSH wiring | `scripts/install-local.mjs`: status / install / uninstall / verify, idempotent, reversible, dry-run by default | isolated profile install → idempotent → uninstall all pass; **installed into the live `desktop` profile and verified 27/27** |
+| Film render | `npx --yes hyperframes@0.9.88 render` | `examples/demo-project.json` → `renders/cineforge-demo-01_2026-11-25_14-12-40.mp4`; ffprobe: H.264 / 1080×1920 / 30fps / **600 frames / 20.0s / 5.1MB** + **AAC 48kHz stereo**; `hyperframes audio --json`: **−19.6 LUFS / −1.3 dBTP / 0 clipping** (peak moment 17.745s lands on the s06 finale impact; measured, not listened) |
+| Offline self-test | `scripts/self-test.mjs` (zero CLI, zero network) | 97/97, including byte-identical sha256 across two compilations of 10 artifacts (deterministic render) |
+| Local DSH wiring | `scripts/install-local.mjs`: status / install / uninstall / verify, idempotent, reversible, dry-run by default | isolated profile install → idempotent → uninstall all pass; **installed into the live `desktop` profile and verified 32/32** |
 
 **GUI**: this release is a set of **in-chat skills with no graphical interface** (no `dsh.client` / `./client` export). A standalone video workbench is planned for phase 2. **Store listing**: materials are prepared but **no PR has been submitted**; listing requires the repository to be ≥1 day old (after 2026-11-25 16:32 +08:00) and a manual PR to `awesome-dsh-plugin` by the user. A local private catalog can make the card visible immediately (see `docs/PUBLISH-商店上架指南.md`).
 
@@ -25,7 +25,7 @@ The design phase (0.1.0-design) was closed on 2026-11-24; 0.2.0 wired the runtim
 
 ```bash
 # 0. Offline self-test (zero dependencies, seconds)
-npm test                         # scripts/self-test.mjs: 86/86
+npm test                         # scripts/self-test.mjs: 97/97
 
 # 1. Storyboard source: examples/demo-project.json (cineforge/storyboard/v1, 9:16, 6 shots, 20s)
 #    In real use the cineforge-director skill produces it in chat, behind the storyboard confirmation gate
@@ -98,7 +98,7 @@ The plugin's `cordis.patch.yml` is merged automatically by the host when loading
 ## Specs
 
 - **Type**: DSH plugin (npm package + `cordis.patch.yml` + `ctx.skills.register`), not a standalone app.
-- **Version / status**: 0.3.0 / runtime (reworked, wired, installed into the live DSH profile, can run through to an audio-enabled MP4).
+- **Version / status**: 0.3.2 / runtime (P1/P2 rework, wired, installed into the live DSH profile, can run through to an audio-enabled MP4; film still NOT FOR PUBLISH).
 - **Primary render backend**: HyperFrames (DSH built-in `dsh-hyperframes` 0.14.1; CLI pinned `hyperframes@0.9.88`), a runtime dependency, not vendored.
 - **Upstream**: [video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft), Apache-2.0, author Wei Yihao, pinned SHA `59f3e9b9e936ff2bce0e18446226d770a3f2f61f`. Only the 124 shot recipe cards, aesthetic rules and motion-token method were absorbed; runtime rendering goes through HyperFrames. No Remotion or MotionHarness code is bundled.
 - **Knowledge scale**: 124 shot recipe cards / 150 animation styles / 10 categories.
@@ -106,7 +106,7 @@ The plugin's `cordis.patch.yml` is merged automatically by the host when loading
 - **Storyboard contract**: `cineforge/storyboard/v1`; SHOTS is the single source of truth.
 - **Output**: default 1920×1080 @ 30fps; vertical platforms 1080×1920; deterministic render (fixed seed 20261124) + BGM/SFX audio (AAC 48kHz stereo).
 
-## Second independent final review (0.3.0, 2026-11-25)
+## Second independent final review (0.3.0, 2026-11-25 — historical basis for the 0.3.2 rework)
 
 See `docs/QA-一期返工终检报告.md`: a clean-context independent subagent re-checked all 27 rules against 8 materials (including the full-resolution contact sheet).
 

@@ -25,6 +25,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `275e10b` — `docs(qa)`: archived the independent final review of the 0.2.0 demo film. Verdict: rework (27 rules: ✓7 / ✗14 / N/A6); P0 `publish.ai_disclosure` explicit + implicit both false; **NOT FOR PUBLISH**. The demo is a phase-1 placeholder sample, not a publishable film.
 
+## [0.3.2] - 2026-11-25
+
+`fix(rework)`: cleared the P1/P2 backlog from the second independent final review (`docs/QA-一期返工终检报告.md`, 27 rules / 8 failing). No new dependencies, no new audio asset.
+
+### Fixed (7 of 8 failing rules)
+
+- **Q5** — new `hero` layout: single-subject opening; `buildTweens` hero branch implements the full spotlight → push-in → float → rim-light → settle arc (deterministic, no `Math.random`).
+- **Q8** — new `outro-finale` layout: four-direction fly-in of 4 feature chips, stage beam, 12 deterministic sparks, wordmark hold; `18.5s` and `19.75s` frames are no longer byte-identical.
+- **Q10** — `.mini-card .meta` raised from `calc(var(--small-px) * 0.80)` (29.6px) to `var(--small-px)` (37px), `white-space:nowrap; overflow:hidden; text-overflow:ellipsis`; three cards reflowed from a narrow 3-column grid to a full-width flex row.
+- **Q11** — 37px clears the 32px floor; the 9:16 / 5.2%-frame-height (100px) conflict is written up in `docs/视觉规范与口径.md` and recorded in `manifest.conscious_violations`.
+- **S4** — `buildAudio` now clamps each SFX to its **own shot end** (not the film end), so `impact-cine` no longer bleeds ~1.06s into `s02`; a 12-clip foley map gives `s03` 3 card landings, `s04` 3 checklist rows and `s05` a real metric lock.
+- **S5** — `docs/QA-音频工程实测报告.md` (492→500 lines, measured with ffprobe/ffmpeg): per-file peak lag, AAC priming, MP4 elst compensation; compiler now computes `from_s = peak_f / fps - SFX_PEAK_OFFSET_S[file] - OUTPUT_OFFSET_S` (OUTPUT_OFFSET_S = 0.000s for hyperframes 0.9.88 / FFmpeg native AAC 48kHz / MP4 Lavf62.12.101 / 30fps, 6/6 NCC residual 0.000s). Recorded in `manifest.audio_alignment`.
+- **C2** — abstract slogan `普通模型也能有导演级设计感` replaced with concrete benefit `124 张配方卡 / 先定分镜，再开机`; `免费商用` rights claim removed from the outro.
+- **Q1 (partial)** — header rule, bottom info band and right-side ruler fill the `--pb:691px` dead space; real product screenshots remain a documented conscious violation.
+
+### Added
+
+- `docs/视觉规范与口径.md` — font-size thresholds, safe-zone px values, Q7/Q5/Q8/C1 conscious-violation write-up.
+- `docs/QA-音频工程实测报告.md` — promoted from gitignored `.local/` so it ships as `manifest.audio_alignment.evidence`.
+- `manifest.legal_word_check` (on-screen copy only, 0 hits) and `manifest.conscious_violations` (Q11 / Q7 / C1).
+- `scripts/self-test.mjs`: 97/97 (4 new 0.3.2 assertions for hero / finale / 12-clip alignment / legal-word check).
+
+### Honestly still open
+
+- The 0.3.2 film was re-rendered and measured: ffprobe H.264 / 1080×1920 / 30fps / 600f / 20.0s / 5,095,058 bytes + AAC 48kHz stereo; `hyperframes audio --json` −19.6 LUFS / −1.3 dBTP / 0 clipping / peak moment 17.745s (lands on the s06 finale impact). Human blind listening (S1) and two rendered BGM versions were still not done; the audio report substitutes objective LUFS / NCC / silencedetect measurement from an in-memory amix reconstruction and says so.
+- `publish.ai_disclosure` stays false and `publish_allowed:false`; the film remains **NOT FOR PUBLISH** (phase-1 template-viability demo).
+- `out/` artifacts still carry local absolute paths; `out/` is gitignored and never pushed.
+
+## [0.3.1] - 2026-11-25
+
+`fix(activation)`: repaired the plugin activation failure reported with the screenshot "启用失败：dsh: warning: 1 entry did not activate cineforge-skills (dsh-cineforge): Error: cannot get property "tools" without inject".
+
+### Root cause
+
+- `lib/index.js` declared `inject = ["skills", "tools"]` and read `ctx.tools` eagerly. Cordis injects only in-scope services; any profile without a `tools` service (CLI/TUI) left the entry PENDING, and a Cordis Proxy getter throws on un-injected property reads. Only the cineforge entry failed; all other plugins activated normally (verified against `cordis.patch.yml` 1910 lines, zero cineforge inserts, and 300+ intact plugin directories in `node_modules`).
+
+### Fixed
+
+- `inject = ["skills"]` only; `tools` is now an optional self-check service via `optionalService(ctx, name)` which tries `ctx.get(name, false)` and falls back to `ctx[name]`, swallowing the Proxy throw.
+- `scripts/install-local.mjs`: fixed two `async get: (n) =>` → `get: async (n) =>` syntax errors (`SyntaxError: Unexpected token ":" at compileSourceTextModule`) and added 5 Cordis/Proxy regression checks (verify is now **32/32**, up from 27/27).
+- `scripts/self-test.mjs`: added the same 5 regression assertions, including a Cordis Proxy mock that throws on un-injected reads.
+- All node verification uses the explicit `C:/Program Files/nodejs/node.exe`; the Electron `process.execPath` cannot run `.mjs` reliably on this machine.
+
 ## [0.3.0] - 2026-11-25
 
 `feat(rework)`: reworked the phase-1 demo film after the independent final review returned **打回** (rework). Turned the 5-shot silent placeholder into a 6-shot, 20s, audio-enabled film and fixed the 14 flagged engineering / contract defects. No new dependencies.

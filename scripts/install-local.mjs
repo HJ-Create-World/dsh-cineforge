@@ -126,6 +126,50 @@ if (cmd === "status" || cmd === "install" || cmd === "uninstall") {
   }
   add("cineforge_health tool registered", toolDefs.some((t) => t.name === "cineforge_health"));
   add("disposers wired", disposers.length > 0);
+
+  // v0.3.1：真机等价的 Cordis Proxy 回归（v0.3.0 在此场景激活失败）
+  const cordisSvc = {
+    logger: { warn() {} },
+    skills: { register: (d) => { proxyReg.set(d.name, d); return () => {}; }, get: async (n) => proxyReg.get(n) },
+    tools: { register: (d) => { proxyTools.set(d.name, d); return () => {}; } },
+  };
+  const proxyReg = new Map(), proxyTools = new Map(), proxyDisposers = [];
+  const cordisOwn = {
+    get(n, strict) {
+      if (Object.prototype.hasOwnProperty.call(cordisSvc, n)) return cordisSvc[n];
+      if (strict === false) return undefined;
+      throw new Error('cannot get property "' + n + '" without inject');
+    },
+    effect(fn) { const d = fn(); if (typeof d === "function") proxyDisposers.push(d); },
+    on(ev, fn) { if (ev === "dispose") proxyDisposers.push(fn); },
+  };
+  const cordisCtx = new Proxy(cordisOwn, {
+    get(t, p, r) {
+      if (typeof p !== "string") return Reflect.get(t, p, r);
+      if (Object.prototype.hasOwnProperty.call(t, p)) return Reflect.get(t, p, r);
+      if (p === "skills") return cordisSvc.skills;
+      throw new Error('cannot get property "' + p + '" without inject');
+    },
+  });
+  let proxyThrew = false;
+  try { void cordisCtx.tools; } catch (e) { proxyThrew = /cannot get property "tools" without inject/.test(String(e && e.message)); }
+  add("Cordis Proxy 未 inject 读取抛错（真机语义）", proxyThrew);
+  let proxyOk = true, proxyErr = "";
+  try { mod.apply(cordisCtx); } catch (e) { proxyOk = false; proxyErr = String(e && e.message); }
+  add("Cordis Proxy 下 apply 不抛错（v0.3.0 事故回归）", proxyOk && proxyErr === "");
+  add("Cordis Proxy 下 3 技能仍注册", proxyReg.size === 3);
+  // 宿主无 tools 服务时也不得抛错
+  const noToolsSvc = { logger: { warn() {} }, skills: { register: (d) => { noToolsReg.set(d.name, d); return () => {}; }, get: async (n) => noToolsReg.get(n) } };
+  const noToolsReg = new Map();
+  const noToolsOwn = {
+    get(n, strict) { if (Object.prototype.hasOwnProperty.call(noToolsSvc, n)) return noToolsSvc[n]; if (strict === false) return undefined; throw new Error('cannot get property "' + n + '" without inject'); },
+    effect(fn) { fn(); }, on() {},
+  };
+  const noToolsCtx = new Proxy(noToolsOwn, { get(t, p, r) { if (typeof p !== "string") return Reflect.get(t, p, r); if (Object.prototype.hasOwnProperty.call(t, p)) return Reflect.get(t, p, r); if (p === "skills") return noToolsSvc.skills; throw new Error('cannot get property "' + p + '" without inject'); } });
+  let noToolsOk = true;
+  try { mod.apply(noToolsCtx); } catch (e) { noToolsOk = false; }
+  add("无 tools 服务 profile 下 apply 不抛错", noToolsOk);
+  add("无 tools 服务 profile 下 3 技能仍注册", noToolsReg.size === 3);
   const failed = checks.filter((c) => !c.ok);
   const out = {
     schema: "cineforge/install-verify/v1",

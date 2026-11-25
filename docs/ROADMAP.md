@@ -24,13 +24,14 @@
 | **一期补齐（生态结论）** | 双画幅预设 + 安全区、ffmpeg 抽 poster、SRT/硬字幕、whisper.cpp / librosa / subtitle.js / wavesurfer.js / dotLottie-web 接入、AI 标识元数据 | ⬜ 待实现 |
 | **端到端验证** | 用一句 idea 跑通到 MP4 + 终检报告 | ✅ 已完成：0.3.0 demo 渲染 H.264 / 1080×1920 / 30fps / 600 帧 / 20.0s + AAC 音轨；静帧验收 7 帧全通过；0.2.0 独立 QA 终检【打回】→ 已返工，二次终检（见下） |
 | **终检返工（0.3.0）** | 音轨 + 两个功能镜头 + 发布合规 + 14 条工程缺陷（6 版式 / 单一事实源 / 时长恒等 / 去 CDN / 钉 registry / 首帧非空 / 安全区 px 化） | ✅ 已完成：check 全组 0 error / 0 warning（仅 7 条结构 lint warning 属二期）；self-test 86/86；仍 NOT FOR PUBLISH |
+| **P1/P2 二次返工（0.3.2）** | 单主体开场（hero）/ 收尾合影（outro-finale）/ 出版级字高（Q10 Q11）/ 逐镜拟音 12 条峰值对齐 SFX（S4）/ 音轨峰值补偿（S5，输出偏移 0.000s）/ 具体化文案（C2）/ 流式三段 finale 版面修 layout E2 | ✅ 已完成：self-test 97/97；check 0 error / 10 warning（layout 0/0）；600 帧成片已渲；ffprobe 20.0s / 5.1MB / AAC 48kHz；audio −19.6 LUFS / −1.3 dBTP / 0 clipping（已测量未试听）；**仍 NOT FOR PUBLISH**（S1 试听 / 带无 BGM 两版 / 发布合规未补） |
 | **二次独立终检（0.3.0）** | 干净上下文独立 subagent 重跑 27 条判例 | ✅【有条件通过】仅一期内部归档 / 模板可用性口径；按可发布成片口径仍打回。✓14 / ✗8 / N/A5，P1/P2 登记二期，冻结静帧基线 |
 
 **一期验收（实测）**：在 DSH 对话里说「给我的 XX 做个 45 秒抖音视频」，技能自动触发 → 分镜确认 → 输出 MP4 + 终检报告。
 
-编译器链路已在 `examples/demo-project.json` 上端到端跑通：`compile-hf.mjs`（8 文件 + 本地 GSAP / 音频资产）→ `verify-hf.mjs`（check 0 error / 7 帧静帧）→ `hyperframes render` → ffprobe 核对（H.264 / 1080×1920 / 30fps / 600 帧 / 20.0s / 3.0MB + AAC 48kHz 立体声）→ `hyperframes audio --json`（−19.4 LUFS / −1.2 dBTP / 0 clipping，已测量未试听）。`self-test.mjs` **86/86**、`install-local.mjs verify` **27/27**（隔离 profile 真实 `npm pack` → `npm install` → import，以及 live `desktop` profile）。
+编译器链路已在 `examples/demo-project.json` 上端到端跑通：`compile-hf.mjs`（8 文件 + 本地 GSAP / 音频资产）→ `verify-hf.mjs`（check 0 error / 7 帧静帧）→ `hyperframes render` → ffprobe 核对（H.264 / 1080×1920 / 30fps / 600 帧 / 20.0s / 5.1MB + AAC 48kHz 立体声）→ `hyperframes audio --json`（0.3.2 实测 −19.6 LUFS / −1.3 dBTP / 0 clipping，峰值 17.745s 落 s06，已测量未试听）。`self-test.mjs` **97/97**、`install-local.mjs verify` **32/32**（隔离 profile 真实 `npm pack` → `npm install` → import，以及 live `desktop` profile）。
 
-**运行期接线（已完成）**：用户 m00741 授权后，已把插件装进 live `desktop` profile（`install-local.mjs install --apply` + `pnpm install` 落地 symlink），用真 node 跑 `install-local.mjs verify` 得 **27/27**，`imported_from` 指向 `node_modules/dsh-cineforge`，技能注册确认。备份在 `.local/profile-backup/desktop-before-install-*.json`；一键回滚 `node scripts/install-local.mjs uninstall --apply`。**GUI**：本版是对话内技能，**无图形界面**（`package.json` 无 `dsh.client` / `./client` 导出），独立工作台排二期。
+**运行期接线（已完成）**：用户 m00741 授权后，已把插件装进 live `desktop` profile（`install-local.mjs install --apply` + `pnpm install` 落地 symlink），0.3.0 装入时 verify 27/27；0.3.2 用真 node 复核得 **32/32**（0.3.1 起新增 5 条 Cordis/Proxy 回归断言），`imported_from` 指向 `node_modules/dsh-cineforge`，技能注册确认。备份在 `.local/profile-backup/desktop-before-install-*.json`；一键回滚 `node scripts/install-local.mjs uninstall --apply`。**GUI**：本版是对话内技能，**无图形界面**（`package.json` 无 `dsh.client` / `./client` 导出），独立工作台排二期。
 
 **插件落地形态（已实测）**：DSH 插件 = npm 包，声明全在 `package.json` 的 `dsh` 字段，靠 `cordis.patch.yml` 的 `- insert:` 行加载；能力用 `ctx.skills.register` / `ctx.tools` 注册；Web UI 另用 `exports["./client"]` + `ctx.slots.inject`。客户端 HMR 走 `/plugins/events` SSE（需 `pnpm run dev:web` + watcher，Electron 不走此路）。安装：`dsh plugin --profile desktop add <spec>`。
 

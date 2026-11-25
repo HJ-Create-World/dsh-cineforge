@@ -56,7 +56,7 @@ description: 从 124 张调校过的镜头配方卡中检索、推荐并校验�
 | 卡标注「仅供参考，需自定义实现」 | 不默认推荐；用户明确点名才做，并标注风险 |
 | 卡标注「缺少预览」 | 不得声称已按动态样片复刻 |
 
-> **一期编译器边界（0.3.0 runtime）**：`scripts/compile-hf.mjs` 把 10 个类别映射到 `lib/hf-primitives.mjs` 的 7 个确定性原语（fade / slide-up / slide-left / scale-in / crash-zoom / wipe / hold），用 `motion-tokens.json` 的 6 预设近似缓动，并用 `lib/hf-layouts.mjs` 的 6 种版式（title / quote / card-grid / checklist / metric / outro）承载画面。**分镜里显式声明的 `primitive` 是权威（SHOTS 单一事实源）**，编译器不再按 `transition_in` / category 静默覆盖。这是「可跑通的骨架」，**不是 124 卡逐卡精确还原**（自动映射表排在三期）。因此：选卡仍按三读协议给出语义与参数表；若该镜要精确还原，须读 `reference_impl` 的 demo TSX 手动增强生成的 `index.html`，并在终检里比对卡的参数是否降档。不要因为编译器没实现某张卡，就凭卡名新写一个动效。
+> **一期编译器边界（0.3.2 runtime）**：`scripts/compile-hf.mjs` 把 10 个类别映射到 `lib/hf-primitives.mjs` 的 7 个确定性原语（fade / slide-up / slide-left / scale-in / crash-zoom / wipe / hold），用 `motion-tokens.json` 的 6 预设近似缓动，并用 `lib/hf-layouts.mjs` 的 8 种版式（title / quote / card-grid / checklist / metric / outro / hero / outro-finale）承载画面；其中 `hero`（单主体聚光五段弧）与 `outro-finale`（四方飞入合影 + 舞台光 + 12 粒子）是 0.3.2 整镜重做的版式，有专属 `buildTweens` 分支。**分镜里显式声明的 `primitive` 是权威（SHOTS 单一事实源）**，编译器不再按 `transition_in` / category 静默覆盖。这是「可跑通的骨架」，**不是 124 卡逐卡精确还原**（自动映射表排在三期）。因此：选卡仍按三读协议给出语义与参数表；若该镜要精确还原，须读 `reference_impl` 的 demo TSX 手动增强生成的 `index.html`，并在终检里比对卡的参数是否降档。不要因为编译器没实现某张卡，就凭卡名新写一个动效。
 
 ## 选型约束（写进分镜校验）
 
