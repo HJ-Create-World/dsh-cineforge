@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>CineForge 工作台 · 设计稿</title>
+<style>
+:root{--ground:#0B0E14;--ink:#F4F1EA;--accent:#D3923C;--muted:#C9C3B6;--panel:#161B24;--line:#232A36;--dim:#6B7789;--bad:#E05B4B;--warn:#E0A53C;--ok:#4FA97D;}
+*{box-sizing:border-box}
+html,body{margin:0;background:#06080C;color:var(--ink);font-family:"Inter","PingFang SC","Microsoft YaHei",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.stage{width:1440px;margin:0 auto;background:var(--ground);height:940px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.top{height:44px;display:flex;align-items:center;gap:14px;padding:0 18px;border-bottom:1px solid var(--line);background:#0E121A;flex:0 0 auto}
+.logo{font-weight:700;letter-spacing:.14em;font-size:11px;color:var(--accent)}
+.proj{font-size:12.5px;color:var(--ink)}
+.proj small{color:var(--dim);margin-left:8px;font-size:11px}
+.spacer{flex:1}
+.save{font-size:11px;color:var(--dim);font-family:ui-monospace,monospace}
+.btn{border:1px solid var(--line);background:#121722;color:var(--muted);font-size:11.5px;padding:5px 11px;border-radius:5px;cursor:default;font-family:inherit}
+.body{flex:1;display:grid;grid-template-columns:272px minmax(0,1fr) 306px;min-height:0}
+.col{min-width:0;display:flex;flex-direction:column;border-right:1px solid var(--line)}
+.col:last-child{border-right:none;border-left:1px solid var(--line)}
+.pane-head{height:36px;display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:1px solid var(--line);background:#0E121A;flex:0 0 auto}
+.pane-head b{font-size:11px;letter-spacing:.1em;color:var(--accent);font-weight:600}
+.pane-head span{font-size:10.5px;color:var(--dim)}
+.pane-body{overflow:hidden;padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-height:0}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:10px;letter-spacing:.04em;color:var(--dim)}
+.field .val{font-size:12px;line-height:1.4;color:var(--ink);background:#121822;border:1px solid var(--line);border-radius:5px;padding:6px 8px;min-height:29px}
+.field .val.ph{color:#5C6678;border-style:dashed}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chiprow{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:10.5px;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
+.chip.on{border-color:var(--accent);color:var(--accent);background:rgba(211,146,60,.10)}
+.seg{display:flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg div{flex:1;text-align:center;font-size:11px;padding:5px 0;color:var(--dim)}
+.seg div.on{background:rgba(211,146,60,.12);color:var(--accent)}
+.hint{font-size:10px;line-height:1.5;color:var(--dim);border-left:2px solid #2C3646;padding-left:8px}
+.hint.warn{border-color:var(--warn);color:#C9A464}
+.stage-col{background:radial-gradient(1200px 500px at 50% -10%,rgba(211,146,60,.05),transparent 60%)}
+.board{display:flex;gap:8px;padding:1px 0 3px;flex:0 0 auto}
+.shot{width:132px;flex:0 0 132px;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
+.shot.sel{border-color:var(--accent);box-shadow:0 0 0 1px rgba(211,146,60,.3),0 6px 18px rgba(0,0,0,.45)}
+.shot-thumb{height:86px;background:#0A0D13;position:relative;overflow:hidden}
+.nopv{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:9px;color:#3E4757;background:repeating-linear-gradient(45deg,#0A0D13,#0A0D13 6px,#0C1017 6px,#0C1017 12px)}
+.nopv span{font-size:7.5px;color:#333B49}
+.shot-thumb img{width:100%;height:100%;object-fit:cover;display:block;opacity:.92}
+.shot-dur{position:absolute;right:3px;bottom:3px;font:8.5px/1.2 ui-monospace,monospace;background:rgba(6,8,12,.85);color:var(--muted);padding:1px 4px;border-radius:3px}
+.shot-body{padding:6px 7px 5px;display:flex;flex-direction:column;gap:3px}
+.shot-head{display:flex;align-items:center;gap:4px;min-width:0}
+.shot-no{font:9.5px/1 ui-monospace,monospace;color:var(--accent);flex:0 0 auto}
+.shot-name{font-size:9px;color:#A8A296;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.shot-intent{font-size:10px;line-height:1.4;color:#B9B3A6;margin:0;height:28px;overflow:hidden}
+.shot-meta{display:flex;gap:4px;align-items:center;min-width:0}
+.shot-meta .mono{font:8px/1.3 ui-monospace,monospace;color:#4E5868;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shot-meta .cat{font-size:8px;color:#4E5868;white-space:nowrap}
+.shot-meta .cat.hl{color:var(--accent)}
+.en{font-size:8px;padding:1px 4px;border-radius:3px;border:1px solid #2A3242;color:#7C8798;white-space:nowrap;flex:0 0 auto}
+.en.low{border-color:#33415A;color:#7E93B5}
+.en.mid{border-color:#3D4A5E;color:#93A3BA}
+.en.mid-high{border-color:#5A4A2C;color:#C9A464}
+.en.peak{border-color:var(--accent);color:var(--accent)}
+.shot-pit{font-size:8.5px;line-height:1.45;color:#8A7A5C;background:#171310;border-top:1px solid #2A2118;padding:4px 7px;height:44px;overflow:hidden}
+.block{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:9px 11px;flex:0 0 auto}
+.block h4{margin:0 0 6px;font-size:9.5px;letter-spacing:.08em;color:var(--dim);font-weight:500;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.block h4 em{font-style:normal;font-size:9px;color:#4E5868;letter-spacing:0}
+.legend{display:flex;gap:12px;font-size:8.5px;color:#4E5868;margin-top:5px}
+.legend i{display:inline-block;width:11px;height:2px;vertical-align:middle;margin-right:4px}
+/* animatic */
+.anim{display:grid;grid-template-columns:78px minmax(0,1fr);gap:12px;align-items:center}
+.phone{position:relative;width:78px;height:139px;border-radius:8px;overflow:hidden;background:#000;border:1px solid #2A3242}
+.phone img{width:100%;height:100%;object-fit:cover;display:block;opacity:.95}
+.phone .tag{position:absolute;top:0;left:0;right:0;font-size:7.5px;letter-spacing:.05em;text-align:center;background:rgba(211,146,60,.92);color:#0B0E14;padding:2px 0;font-weight:600}
+.anim-side{display:flex;flex-direction:column;gap:7px;min-width:0}
+.anim-now{display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--ink)}
+.anim-now b{color:var(--accent);font-family:ui-monospace,monospace;font-size:10px}
+.anim-now span{font:9px ui-monospace,monospace;color:#4E5868}
+.anim-now em{margin-left:auto;font-style:normal;font-size:9px;color:#4E5868}
+.scrub{display:flex;align-items:center;gap:8px}
+.scrub .pl{width:0;height:0;border-left:7px solid var(--ink);border-top:4.5px solid transparent;border-bottom:4.5px solid transparent;flex:0 0 auto}
+.scrub .tr{flex:1;height:3px;background:#2A3242;border-radius:2px;position:relative}
+.scrub .tr b{position:absolute;left:0;top:0;bottom:0;width:38%;background:var(--accent);border-radius:2px}
+.scrub .tr i{position:absolute;left:38%;top:-2px;width:7px;height:7px;background:var(--ink);border-radius:50%}
+.scrub .tm{font:9px ui-monospace,monospace;color:var(--muted);flex:0 0 auto}
+.anim-facts{display:flex;gap:10px;font-size:8.5px;color:#5C6678;flex-wrap:wrap}
+.anim-facts u{text-decoration:none;color:#8A94A6;font-family:ui-monospace,monospace}
+.anim-note{font-size:8.5px;color:#6E7A8C;border-left:2px solid #2C3646;padding-left:7px;line-height:1.5}
+.gate{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#131A18;border:1px solid #1F3A30;border-radius:6px;flex:0 0 auto;margin-top:auto}
+.gate .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(79,169,125,.15);flex:0 0 auto}
+.gate p{margin:0;font-size:10px;color:#8FB8A4;flex:1;line-height:1.45}
+.gate .go{font-size:10.5px;color:#0B0E14;background:var(--ok);padding:6px 12px;border-radius:5px;font-weight:600;white-space:nowrap}
+/* C */
+.col-c .pane-body{gap:9px}
+.search{display:flex;align-items:center;gap:6px;background:#121822;border:1px solid var(--line);border-radius:5px;padding:5px 8px;font-size:10.5px;color:#55606E;flex:0 0 auto}
+.cats{display:flex;flex-wrap:wrap;gap:4px;flex:0 0 auto}
+.cat{font-size:9.5px;padding:2px 6px;border-radius:4px;border:1px solid var(--line);color:var(--dim);display:flex;gap:4px}
+.cat b{font-weight:500;color:#4E5868;font-size:9px}
+.cat.on{border-color:var(--accent);color:var(--accent)}
+.cat.on b{color:var(--accent)}
+.lib{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:0 0 auto}
+.lc{border:1px solid var(--line);border-radius:5px;overflow:hidden;background:var(--panel)}
+.lc .th{height:50px;background:#0A0D13;overflow:hidden}
+.lc .th img{width:100%;height:100%;object-fit:cover;opacity:.9}
+.lc .nm{font-size:8.5px;color:#A8A296;padding:3px 5px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lc .mt{font:7.5px/1.4 ui-monospace,monospace;color:#4E5868;padding:0 5px 4px;display:flex;justify-content:space-between}
+.rules{font-size:9px;line-height:1.6;color:#7A8494}
+.rules b{color:var(--accent);font-weight:500;font-family:ui-monospace,monospace;font-size:8.5px}
+.bottom{height:46px;flex:0 0 auto;border-top:1px solid var(--line);background:#0E121A;display:flex;align-items:center;padding:0 14px}
+.steps{display:flex;align-items:center;flex:1;overflow:hidden}
+.step{font-size:9.5px;color:#414B5C;padding:3px 5px;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.step.done{color:#5E6A7C}
+.step.done s{text-decoration:none;color:var(--ok);font-size:9px}
+.step.now{color:var(--accent);background:rgba(211,146,60,.10);border-radius:4px}
+.sep{width:1px;height:18px;background:var(--line);margin:0 10px;flex:0 0 auto}
+.metric{font-size:9.5px;color:var(--dim);display:flex;align-items:center;gap:5px;white-space:nowrap}
+.metric u{text-decoration:none;color:#4E5868;font-family:ui-monospace,monospace}
+.btn-primary{background:var(--accent);color:#0B0E14;font-weight:600;border:none}
+.btn-primary.off{background:#232A36;color:#4E5868}
+</style></head><body>
+<div class="stage">
+  <div class="top">
+    <div class="logo">CINEFORGE</div>
+    <div class="proj">影铸 CineForge · 20 秒抖音片<small>cineforge-demo-01 · rev 12 · stage STORYBOARD</small></div>
+    <div class="spacer"></div>
+    <div class="save">已保存 15:34</div>
+    <button class="btn">返回对话</button>
+  </div>
+  <div class="body">
+    <section class="col">
+      <div class="pane-head"><b>A · 简报</b><span>还差 1 项</span></div>
+      <div class="pane-body">
+        <div class="field"><label>一句话 IDEA</label><div class="val">给普通模型装上导演级设计感</div></div>
+        <div class="field"><label>给谁看</label><div class="val">想做产品宣传片的独立开发者</div></div>
+        <div class="field"><label>想让 TA 做什么</label><div class="val">看完点进 GitHub 仓库</div></div>
+        <div class="field"><label>一句话卖点</label><div class="val">124 张镜头配方卡，先定分镜再开机</div></div>
+        <div class="field"><label>证据是什么</label><div class="val ph">还没填</div></div>
+        <div class="field"><label>平台</label>
+          <div class="chiprow"><span class="chip">B站</span><span class="chip on">抖音</span><span class="chip">小红书</span><span class="chip">视频号</span><span class="chip">YouTube</span></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>画幅（锁定）</label><div class="val" style="font-family:ui-monospace,monospace;font-size:10.5px">9:16 · 1080×1920</div></div>
+          <div class="field"><label>时长（锁定）</label><div class="val" style="font-family:ui-monospace,monospace;font-size:10.5px">20.0s · 600f</div></div>
+        </div>
+        <div class="field"><label>模式</label><div class="seg"><div>共同创作</div><div class="on">自主创作</div></div></div>
+        <div class="hint warn">安全区：底部 20% 被抖音 UI 覆盖，字卡不得入内；右侧 15% 同理。</div>
+      </div>
+    </section>
+    <section class="col stage-col">
+      <div class="pane-head"><b>B · 分镜板</b><span>6 镜 · 20.0s · 30fps</span><div class="spacer"></div><span style="font-size:9.5px;color:#3E4757">拖拽重排 · 拉边改时长 · 从右栏拖卡进来</span></div>
+      <div class="pane-body">
+        <div class="board"><article class="shot">
+  <div class="shot-thumb"><img src="assets/frame-1_5.png" alt=""><span class="shot-dur">3.0s · 90f</span></div>
+  <div class="shot-body">
+   <div class="shot-head"><span class="shot-no">01</span><span class="shot-name">brand-ink-open</span></div>
+   <p class="shot-intent">影铸 CineForge</p>
+   <div class="shot-meta"><span class="en low">low</span><span class="cat">opening</span><span class="mono">crash-zoom</span></div>
+  </div>
+  <div class="shot-pit">Q5 开场只给一个主角——已有 logo+一句话，别再叠第二个视觉焦点</div>
+ </article><article class="shot sel">
+  <div class="shot-thumb"><img src="assets/blur-slide.jpg" alt=""><span class="shot-dur">3.0s · 90f</span></div>
+  <div class="shot-body">
+   <div class="shot-head"><span class="shot-no">02</span><span class="shot-name">blur-slide</span></div>
+   <p class="shot-intent">124 张配方卡，先定分镜，再开机</p>
+   <div class="shot-meta"><span class="en mid">mid</span><span class="cat hl">typography</span><span class="mono">slide-up</span></div>
+  </div>
+  <div class="shot-pit">Q11 要读的文字有最低有效字高：这句在 9:16 里必须 ≥56px</div>
+ </article><article class="shot">
+  <div class="shot-thumb"><img src="assets/card-stack.jpg" alt=""><span class="shot-dur">4.0s · 120f</span></div>
+  <div class="shot-body">
+   <div class="shot-head"><span class="shot-no">03</span><span class="shot-name">card-stack</span></div>
+   <p class="shot-intent">124 张镜头配方卡</p>
+   <div class="shot-meta"><span class="en mid-high">mid-high</span><span class="cat">ui-entrance</span><span class="mono">slide-left</span></div>
+  </div>
+  <div class="shot-pit">P4 一种手法全片只当一次主角：卡片堆叠只在这里用</div>
+ </article><article class="shot">
+  <div class="shot-thumb"><img src="assets/frame-8.png" alt=""><span class="shot-dur">4.0s · 120f</span></div>
+  <div class="shot-body">
+   <div class="shot-head"><span class="shot-no">04</span><span class="shot-name">confirm-gate</span></div>
+   <p class="shot-intent">分镜确认门</p>
+   <div class="shot-meta"><span class="en mid-high">mid-high</span><span class="cat">interaction</span><span class="mono">scale-in</span></div>
+  </div>
+  <div class="shot-pit">R1 关键信息落定后必须呼吸：勾选完成要有落定停顿</div>
+ </article><article class="shot">
+  <div class="shot-thumb"><div class="nopv">无预览<br><span>该卡无官方海报</span></div><span class="shot-dur">3.0s · 90f</span></div>
+  <div class="shot-body">
+   <div class="shot-head"><span class="shot-no">05</span><span class="shot-name">data-counter</span></div>
+   <p class="shot-intent">150 个动效预览</p>
+   <div class="shot-meta"><span class="en low">low</span><span class="cat">data</span><span class="mono">wipe</span></div>
+  </div>
+  <div class="shot-pit">C3 3D 镜头注记活在同一个 3D 空间——数字别在 2D 层飘</div>
+ </article><article class="shot">
+  <div class="shot-thumb"><img src="assets/frame-19_75.png" alt=""><span class="shot-dur">3.0s · 90f</span></div>
+  <div class="shot-body">
+   <div class="shot-head"><span class="shot-no">06</span><span class="shot-name">outro-group-photo-launch</span></div>
+   <p class="shot-intent">CineForge · 影铸 —— 收尾合影</p>
+   <div class="shot-meta"><span class="en peak">peak</span><span class="cat">outro</span><span class="mono">hold</span></div>
+  </div>
+  <div class="shot-pit">Q8 结尾做成发布会合影：多方向飞入围住字标，然后 1s 静止</div>
+ </article></div>
+        <div class="block">
+          <h4>能量曲线 <em>虚线＝目标弧线　实线＝当前分镜</em></h4>
+          <svg viewBox="0 0 620 60" width="100%" height="60" preserveAspectRatio="none" style="display:block">
+            <polyline points="0,42 186,29 260,18 310,42 446,18 533,42 620,5" fill="none" stroke="#3A4454" stroke-width="1" stroke-dasharray="4 3"/>
+            <polyline points="83.5,42.0 170.5,29.0 272.0,18.0 388.0,18.0 489.5,42.0 576.5,5.0" fill="none" stroke="#D3923C" stroke-width="1.5" opacity=".85"/>
+            <circle cx="83.5" cy="42.0" r="2.6" fill="#D3923C"/><circle cx="170.5" cy="29.0" r="2.6" fill="#D3923C"/><circle cx="272.0" cy="18.0" r="2.6" fill="#D3923C"/><circle cx="388.0" cy="18.0" r="2.6" fill="#D3923C"/><circle cx="489.5" cy="42.0" r="2.6" fill="#D3923C"/><circle cx="576.5" cy="5.0" r="2.6" fill="#D3923C"/>
+          </svg>
+          <div class="legend"><span><i style="background:#3A4454"></i>目标弧线</span><span><i style="background:#D3923C"></i>当前分镜</span><span style="color:#C9A464">⚠ S03–S04 连续高能量，缺一次呼吸</span></div>
+        </div>
+        <div class="block" style="padding:8px 11px 6px">
+          <h4>帧级时间轴 <em>从 SHOTS 派生 · 不可单独编辑</em></h4>
+          <svg viewBox="0 0 620 46" width="100%" height="46" preserveAspectRatio="none" style="display:block"><rect x="40.0" y="0" width="87.0" height="16" rx="2" fill="#2E3849"/><rect x="127.0" y="0" width="87.0" height="16" rx="2" fill="#54647C"/><rect x="214.0" y="0" width="116.0" height="16" rx="2" fill="#54647C"/><rect x="330.0" y="0" width="116.0" height="16" rx="2" fill="#54647C"/><rect x="446.0" y="0" width="87.0" height="16" rx="2" fill="#2E3849"/><rect x="533.0" y="0" width="87.0" height="16" rx="2" fill="#D3923C"/><line x1="40.0" y1="0" x2="40.0" y2="16" stroke="#0B0E14" stroke-width="1.5"/><text x="40.0" y="43" fill="#49525F" font-size="8" text-anchor="middle" font-family="ui-monospace,monospace">0s</text><line x1="185.0" y1="0" x2="185.0" y2="16" stroke="#0B0E14" stroke-width="1.5"/><text x="185.0" y="43" fill="#49525F" font-size="8" text-anchor="middle" font-family="ui-monospace,monospace">5s</text><line x1="330.0" y1="0" x2="330.0" y2="16" stroke="#0B0E14" stroke-width="1.5"/><text x="330.0" y="43" fill="#49525F" font-size="8" text-anchor="middle" font-family="ui-monospace,monospace">10s</text><line x1="475.0" y1="0" x2="475.0" y2="16" stroke="#0B0E14" stroke-width="1.5"/><text x="475.0" y="43" fill="#49525F" font-size="8" text-anchor="middle" font-family="ui-monospace,monospace">15s</text><line x1="620.0" y1="0" x2="620.0" y2="16" stroke="#0B0E14" stroke-width="1.5"/><text x="620.0" y="43" fill="#49525F" font-size="8" text-anchor="middle" font-family="ui-monospace,monospace">20s</text><text x="83.5" y="29" fill="#6B7789" font-size="9" text-anchor="middle" font-family="ui-monospace,monospace">S01</text><text x="170.5" y="29" fill="#6B7789" font-size="9" text-anchor="middle" font-family="ui-monospace,monospace">S02</text><text x="272.0" y="29" fill="#6B7789" font-size="9" text-anchor="middle" font-family="ui-monospace,monospace">S03</text><text x="388.0" y="29" fill="#6B7789" font-size="9" text-anchor="middle" font-family="ui-monospace,monospace">S04</text><text x="489.5" y="29" fill="#6B7789" font-size="9" text-anchor="middle" font-family="ui-monospace,monospace">S05</text><text x="576.5" y="29" fill="#6B7789" font-size="9" text-anchor="middle" font-family="ui-monospace,monospace">S06</text></svg>
+        </div>
+        <div class="block">
+          <h4>动态分镜 ANIMATIC <em>540×960 · 静帧驱动 · 时间线与声音真实</em></h4>
+          <div class="anim">
+            <div class="phone"><img src="assets/frame-8.png" alt=""><span class="tag">预览·非最终</span></div>
+            <div class="anim-side">
+              <div class="anim-now"><b>S02</b>blur-slide<em>3.0s · 90f · typography</em></div>
+              <div class="scrub"><span class="pl"></span><div class="tr"><b></b><i></i></div><span class="tm">07.6 / 20.0s</span></div>
+              <div class="anim-facts"><span>拍点 <u>4</u> 处已对齐</span><span>SFX <u>5</u> 条已钉帧</span><span>BGM <u>120</u> BPM</span></div>
+              <div class="anim-note">改分镜后重新生成 animatic，约 10 秒看到新节奏——改的是分镜，不是像素。</div>
+            </div>
+          </div>
+        </div>
+        <div class="gate"><span class="dot"></span><p>分镜已就绪：6 镜全部分配配方卡，能量弧线仅 1 处警告。<br>放行后进入最终素材采集，画幅与时长将锁定。</p><span class="go">确认放行 →</span></div>
+      </div>
+    </section>
+    <section class="col col-c">
+      <div class="pane-head"><b>C · 镜头库</b><span>124 张</span></div>
+      <div class="pane-body">
+        <div class="search">⌕ 搜索卡片 / 标签 / 意图</div>
+        <div class="cats"><span class="cat on">开场<b>11</b></span><span class="cat on">字卡<b>22</b></span><span class="cat">界面入场<b>21</b></span><span class="cat">转场<b>15</b></span><span class="cat">特效<b>15</b></span><span class="cat">交互<b>11</b></span><span class="cat">运镜<b>10</b></span><span class="cat">节奏<b>8</b></span><span class="cat">收尾<b>6</b></span><span class="cat">数据<b>5</b></span></div>
+        <div class="lib"><div class="lc"><div class="th"><img src="assets/spotlight-hero-card.jpg" alt=""></div><div class="nm">spotlight 主角卡</div><div class="mt"><span>高</span><span>2.8s</span></div></div><div class="lc"><div class="th"><img src="assets/paper-title-card.jpg" alt=""></div><div class="nm">纸质标题卡</div><div class="mt"><span>低</span><span>2.2s</span></div></div><div class="lc"><div class="th"><img src="assets/word-relay-filmstrip.jpg" alt=""></div><div class="nm">字接力 胶片条</div><div class="mt"><span>中高</span><span>4.0s</span></div></div><div class="lc"><div class="th"><img src="assets/scan-bracket-sweep.jpg" alt=""></div><div class="nm">扫描括号掠过</div><div class="mt"><span>中高</span><span>3.2s</span></div></div><div class="lc"><div class="th"><img src="assets/terminal-3d.jpg" alt=""></div><div class="nm">3D 终端面板</div><div class="mt"><span>中</span><span>5.0s</span></div></div><div class="lc"><div class="th"><img src="assets/comic-panel-split.jpg" alt=""></div><div class="nm">漫画分格</div><div class="mt"><span>中高</span><span>3.6s</span></div></div><div class="lc"><div class="th"><img src="assets/radial-wave.jpg" alt=""></div><div class="nm">径向波扩散</div><div class="mt"><span>中</span><span>2.4s</span></div></div><div class="lc"><div class="th"><img src="assets/fracture.jpg" alt=""></div><div class="nm">碎裂重组</div><div class="mt"><span>高</span><span>3.0s</span></div></div></div>
+        <div class="block" style="padding:8px 10px">
+          <h4>审美准则速查 <em>27 条</em></h4>
+          <div class="rules"><b>Q5</b> 开场只给一个主角<br><b>R1</b> 落定后必须呼吸，字标 hold ≥1s<br><b>P4</b> 一种手法全片只当一次主角<br><b>Q11</b> 字幕 ≥5% 帧高，辅助 ≥3%</div>
+        </div>
+        <div class="hint" style="margin-top:auto">约 40% 卡片有官方海报；其余显示「无预览」占位——上游仓库未随包分发 mp4。</div>
+      </div>
+    </section>
+  </div>
+  <div class="bottom">
+    <div class="steps">
+      <span class="step done"><s>✓</s>IDEA</span><span class="step done"><s>✓</s>简报</span><span class="step done"><s>✓</s>文案</span><span class="step done"><s>✓</s>视觉</span><span class="step done"><s>✓</s>选卡</span><span class="step now">● 分镜</span><span class="step">素材</span><span class="step">实现</span><span class="step">声音</span><span class="step">终检</span><span class="step">交付</span>
+    </div>
+    <div class="sep"></div><div class="metric">静帧 <u>—</u></div>
+    <div class="sep"></div><div class="metric">终检 <u>—</u></div>
+    <div class="sep"></div>
+    <button class="btn">导出</button>
+    <button class="btn btn-primary off" style="margin-left:8px">渲染（放行后可用）</button>
+  </div>
+</div>
+</body></html>
