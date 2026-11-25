@@ -1,0 +1,22 @@
+{
+  "schema": "cineforge/goal-state/v1",
+  "required": [
+    "stage",
+    "status"
+  ],
+  "fields": {
+    "stage": "IDEA|BRIEF|SCRIPT|SPEC|MAPPING|STORYBOARD|ASSETS|BUILD|SOUND|QA|DELIVER|PUBLISHED",
+    "status": "running|waiting|interrupted|done|failed",
+    "waiting_for": "硬门 id，如 storyboard_approve",
+    "safe_point": "{ stage, shot_id } 最近一次可恢复的安全点",
+    "completed_stages": "已完成阶段数组",
+    "interrupt_requested": "bool，用户点了打断但尚未到达安全点",
+    "overrides": "手写确认记录，如 [{ gate:\"storyboard_approve\", by:\"user\", at:ISO }]",
+    "last_heartbeat": "ISO 时间，用于判断执行器是否还活着"
+  },
+  "invariants": [
+    "只在阶段边界与单镜渲染完成时落盘（安全点）",
+    "打断不删除已完成产物；恢复时 stale 重跑、done 跳过",
+    "回退会置 status=interrupted，且不自动重启 GOAL"
+  ]
+}

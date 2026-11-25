@@ -1,0 +1,25 @@
+{
+  "schema": "cineforge/template/v1",
+  "required": [
+    "id",
+    "name",
+    "layers",
+    "slots"
+  ],
+  "fields": {
+    "id": "kebab-case，唯一",
+    "name": "展示名",
+    "from_project": "来源工程 id（手写模板可省）",
+    "layers": "style|structure|motion|sound|script_skeleton 的子集",
+    "style": "{ palette[], fonts{}, motion_tokens_id, safe_area{} }",
+    "structure": "{ shot_count, durations_f[], energy_arc, aspect, platform }",
+    "motion": "{ cards[] }  仅卡片 id 序列，不含具体文案",
+    "sound": "{ bpm, sfx_pattern }",
+    "slots": "新建工程必须由用户填写的空位，如 [\"product_name\",\"headline\",\"cta\"]"
+  },
+  "invariants": [
+    "模板不得包含具体文案、产品名、logo 位图、客户数据",
+    "slots[] 未填满不得进入 STORYBOARD 阶段",
+    "layers[] 决定复用范围，未列出的层不预填"
+  ]
+}

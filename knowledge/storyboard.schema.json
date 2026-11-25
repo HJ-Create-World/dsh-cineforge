@@ -8,14 +8,43 @@
   "fields": {
     "project": "id, idea, brief, audience, goal, platform, aspect, duration_s, language, mode(co-create|autonomous|template)",
     "design_spec": "palette, typography, motion_tokens_id, energy_curve, styleframe_refs, data_policy",
-    "shots": "[{ id, from, duration_f, card_id, card_style_key, intent, action, asset_ref, caption, transition_in, transition_out, sfx_cue, beat_anchor, energy, qa_frames:[n,n], backend, props, schema }]",
+    "shots": "[{ id, from, duration_f, card_id, card_style_key, intent, action, asset_ref, caption, transition_in, transition_out, sfx_cue, beat_anchor, energy, qa_frames:[n,n], backend, props, schema, locked[], user_edited[], origin, render_status }]",
     "audio": "bgm{ref,bpm,phase,beat_grid,hit_list}, sfx[], voiceover[]",
-    "publish": "platforms[], title, description, tags[], cover, ai_disclosure, schedule"
+    "publish": "platforms[], title, description, tags[], cover, ai_disclosure, schedule",
+    "template": "{ schema:\"cineforge/template/v1\", id, name, from_project, layers[], style{}, structure{}, motion{}, sound{}, slots[] }",
+    "goal": "{ schema:\"cineforge/goal-state/v1\", stage, status(running|waiting|interrupted|done|failed), waiting_for, safe_point{stage,shot_id}, completed_stages[], interrupt_requested, overrides[], last_heartbeat }"
   },
   "invariants": [
     "SHOTS 是唯一事实源；字幕表 / SFX 钉帧 / 转场点全部从它派生",
     "禁 Date.now() / Math.random()，伪随机固定种子",
     "每镜只讲一个主动效；品牌字标 hold ≥30f；批量动效收尾留 15f 静止",
-    "分镜确认前不得进入最终素材采集"
-  ]
+    "分镜确认前不得进入最终素材采集",
+    "locked[] 是唯一阻止 AI 覆盖的机制；user_edited[] 仅作界面标记",
+    "模板只存「怎么拍」不存「拍什么」：slots[] 必须在新建工程时由用户填写",
+    "GOAL 模式不得自动通过分镜硬门（除非 goal.overrides[] 有手写确认记录）"
+  ],
+  "locked": {
+    "field": "shots[].locked",
+    "type": "string[] (JSON path segments within the shot, e.g. [\"card_id\",\"props.blur\"]; [\"*\"] locks the whole shot)",
+    "semantics": "AI regeneration MUST skip locked paths. Only the user (or an explicit user action) may change or unlock them.",
+    "note": "user_edited[] is a visual marker only; it does NOT block AI overwrite. locked[] is the only blocking mechanism."
+  },
+  "enums": {
+    "shots[].origin": [
+      "ai",
+      "user",
+      "template",
+      "reference"
+    ],
+    "shots[].render_status": [
+      "pending",
+      "done",
+      "stale"
+    ],
+    "project.mode": [
+      "co-create",
+      "autonomous",
+      "template"
+    ]
+  }
 }
