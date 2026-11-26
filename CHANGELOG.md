@@ -7,7 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-（0.5.0 及之后）
+（0.6.0 及之后）
+
+## [0.5.0] - 2026-11-25
+
+`feat(workbench)`: 五条新需求全部落到界面与端点 —— AI 全自动但可局部改（锁定/单镜编辑器）、把关点与 GOAL 模式、参考视频导入、模板双向（提取 + 存档）、四套主题；自检 181 → **238/238**。需求 4 此前只有「从参考片提取」，这次补上了「把当前工程存成模板」。
+
+### Added — 工程存为模板（需求 4 的另一半）
+
+- **`lib/template-save.mjs`（新，零依赖）**：`templateFromProject(project, opts)` 从 `project.json` 抽一份 `cineforge/template/v1`。
+  - **进模板的**：`design_spec.palette`（→ `[{hex,role}]`，ground/ink/accent/muted/panel，rgba 的 grid 跳过）、`typography`、`motion_tokens_id`、每镜 `card_id`（→ `motion.cards[]`）、`duration_f`（→ `durations_f` + `duration_stats`）、`energy`（→ `energy_arc[{at_s,level,rank}]`）、BGM `bpm/hit_list`、SFX 的**相对位置** `sfx_pattern[{file,at_ratio,volume}]`。
+  - **绝不进模板的**：每镜 `copy` / `caption` / `action` / `intent`、工程 `brief`、`project.id` 以外的品牌信息、**任何本机绝对路径**（`from_project` 只写 `project_id` 与结构摘要，并标 `content_stripped:true`）。
+  - `templateIdOf()` 中文标题退化到时间戳 id；`templateFileName()` 只接受 `^[a-z0-9][a-z0-9-]{0,39}# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+，防路径穿越。
+- **`POST /dsh-cineforge/template/save`**：body `{name, id?, title?, layers[]?, slots[]?, overwrite?}`。三条纪律 —— 只读工程 403；模板带进具体文案 → `validateTemplate` 拦下返 400 `TEMPLATE_CONTENT_LEAK`（宁可不落盘）；同 id 已存在要 `overwrite:true`，否则 409 `TEMPLATE_EXISTS`。**不写 project.json**（存模板是导出，不改工程）。
+- **`scripts/save-template.mjs`（新 CLI）**：`node scripts/save-template.mjs <工程目录> --id <id> [--install] [--force] [--json]`，不加 `--install` 只写到工程目录 `template/`，看一眼再装。
+- **工作台 UI**：模板 tab 底部新增「把当前工程存成模板」——名称/ID 两个输入 + 四层勾选 + 存为模板按钮；覆盖前 `window.confirm`。工程没有 `card_id` 时按钮禁用并说明原因。
+- **内置示例模板**：`knowledge/templates/template-ink-press-6shot.json`（`origin:"project-saved"`，6 镜 / BPM 129 / 4 层 / 空位 `product_name`），来自 20s 演示工程，与 `world-search`（`reference-extracted`，76 镜）并列，两种来路各一份。
+
+### Added — 其余四条（0.5.0 主体）
+
+- **主题体系**：`knowledge/themes.json`（`cineforge/themes/v1`）四套 —— `dark` 暮色（默认）/ `light` 日光 / `ink` 纸墨 / `neon` 夜航，每套 30+ token；`GET /themes` 下发，客户端 `themeCss()` 编成 `[data-theme]` 覆盖注入 `<style id="dsh-cineforge-theme-tokens">`。**加主题 = 加一条 JSON**，客户端不认识具体主题名。
+- **参考片导入**：`POST /reference/analyze`（切镜 + 关键帧 + 拼图 + 风格指纹，产物落工程 `analysis/`）/ `POST /reference/clear`。指纹 schema `cineforge/style-fingerprint/v3`：调色板 6 色、明暗 `*_pct`、运动 p50/p90/p99 + 静态比例、BPM（谐波求和自相关）+ 分段稳定性。
+- **GOAL 模式**：`lib/goal.mjs` + `GET/POST /goal`（start / pause / resume / interrupt / advance / override / disable）。硬门两个（分镜确认、发布）永远要用户按；`advance` 遇硬门未放行就停 `waiting`，**不自动越门**；打断先挂 `interrupt_requested`，到阶段边界安全点才置 `interrupted`。
+- **模板套用**：`POST /template/apply`（五层复用 + `slots` 校验）；结构层用「每镜最小 15 帧 + 最大余数法」，保证总帧数守恒。
+- **简报可编辑**：6 个字段（idea/audience/action/pitch/evidence/tone）真能改，改过的字段左侧有标记；平台 chip 可点，联动画幅/时长/安全区；模板空位输入框。
+- **单镜编辑器**：每镜可改时长/能量/intent，带「重置为 AI 建议」；锁定按钮（`L`）阻止 AI 覆盖。
+
+### Fixed
+
+- **模板套用会覆盖真分镜**：`world-search` 的 `motion.cards` 是空数组，原逻辑照样用空骨架替换 `shots` —— 6 镜全变 `card_id:""`。现在判据改成「已有真分镜（有 card_id）就只写 `template_structure` 镜长建议，不动 shots」。
+- **帧数分配溢出**：76 镜 × 每镜下限 15 帧 = 2082 帧（69.4s），目标 60s。改为超上限先等间隔抽稀，再用最大余数法分配，实测 76 镜 60s → 恰好 1800 帧。
+- **发布弹窗文案**：九项检查写成「这八项」，已统一为九项（客户端 + routes 注释）。
+- **VerifyWall 离屏渲染失败**：测试 fixture 喂的是扁平结构，真实 `GET /verify` 返回 `{found, verify:{...}}` —— 修 fixture，非代码 bug。
+
+### Verified
+
+- `node scripts/self-test.mjs` → **ok true / total 238 / passed 238 / failed 0**（新增 16 条：模板 id/文件名安全、工程存模板剥文案、不写绝对路径、卡片序列、调色板角色、帧数守恒、能量弧、SFX 相对位置、模板自校验、无分镜拒绝、路由与客户端入口）。
+- 真实 HTTP：`POST /template/save` 200（`template-cineforge-demo-flow.json` 4340 B，6 卡、5 色带 role、BPM 129、3 条 caveat）；**泄漏检查**：拿工程里 6 条真实标题逐个在模板 JSON 里搜，全部 `false`；`from_project` 无盘符。重复存同 id → 409 `TEMPLATE_EXISTS`；只读工程 → 403 `READ_ONLY`。
+- `GET /templates` → 2 份（`ink-press-6shot` project-saved / `world-search` reference-extracted）。
+- 离屏渲染（替身 React，全部组件）：**ALL RENDER OK**（TopBar / GoalBar / SectionA×3 / Gates / SectionB / SectionC / BottomBar / VerifyWall / PublishDialog / EmptyState）。
+- 客户端 bundle `plugins/??dsh-cineforge/client.js&rev=4f07ceec2808` 124651 B，`onTplSave / template/save / cfw-save-tpl / 这九项由服务端重算` 全部命中。
 
 ## [0.4.2] - 2026-11-25
 

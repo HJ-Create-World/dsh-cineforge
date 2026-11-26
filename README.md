@@ -5,11 +5,11 @@
 
 GitHub：[HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-cineforge) · 上游：[video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft)（Apache-2.0）
 
-## 当前状态：runtime 0.4.2（工作台收口 · 静帧验收 · 发布检查 · 已装进本机 DSH）
+## 当前状态：runtime 0.5.0（工作台五条新需求 · 模板双向 · 四套主题 · 已装进本机 DSH）
 
-> 设计阶段（0.1.0-design）2026-11-24 经用户批准；0.2.0 完成运行时接线；0.3.0 按独立终检【打回】做了一期返工；0.3.2 清掉二次终检的 P1/P2 返工项；0.4.0 落地 C 阶段（参考片分析转正）+ A 阶段（工作台骨架，只读），自检 97 → 129；0.4.1 把工作台从只读变成能动，自检 156；**0.4.2 收口** —— 静帧验收墙（读真实 verify.json）/ 发布前九项检查与发布回执 / 未保存拦截 / 只读锁定 / 降级占位，自检 **181/181**。
+> 设计阶段（0.1.0-design）2026-11-24 经用户批准；0.2.0 完成运行时接线；0.3.0 按独立终检【打回】做了一期返工；0.3.2 清掉二次终检的 P1/P2 返工项；0.4.0 落地 C 阶段（参考片分析转正）+ A 阶段（工作台骨架，只读），自检 97 → 129；0.4.1 把工作台从只读变成能动，自检 156；0.4.2 收口 —— 静帧验收墙（读真实 verify.json）/ 发布前九项检查与发布回执 / 未保存拦截 / 只读锁定 / 降级占位，自检 181；**0.5.0 五条新需求落地** —— AI 全自动但可局部改（锁定 + 单镜编辑器）/ GOAL 模式与软硬门 / 参考视频导入 / 模板双向（参考片提取 + 工程存档）/ 四套主题，自检 **238/238**。
 
-`[0.4.2]` 之后接着做 0.5.0（五条新需求界面：AI 自动分镜 + 局部改、GOAL 模式与软硬门、参考视频导入、流程存模板、明暗双主题）。
+`[0.5.0]` 之后是 0.6.0：把 5 个切片里剩下的「局部重跑」（工程级 / 镜头级 / 字段级失效重渲）接上，再做 dshmarket 上架与 awesome-dsh-plugin PR。
 
 > 「二次独立终检结论」与「独立终检结论」两节保留为历史判定与整改依据。
 
@@ -19,11 +19,12 @@ GitHub：[HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-
 | 分镜编译 | `scripts/compile-hf.mjs`：`cineforge/storyboard/v1` → HyperFrames standalone（8 文件 + 本地 GSAP / 音频资产） | `hyperframes@0.9.88 check`：**0 error / 10 warning**（layout / motion / contrast / audio 全组 0/0；7 条结构 lint 属二期子组合 + 3 条 craft line_unread 短句可读性），均非阻断 |
 | 静帧验收 | `scripts/verify-hf.mjs`：check + 最多 6 时间点 snapshot + contact-sheet | 7 帧 png 全非零、`ok=true`、`empty_frames=0`；二次独立终检【有条件通过】（仅内部归档口径），见下 |
 | 成片渲染 | `hyperframes@0.9.88 render` | `examples/demo-project.json` → `renders/cineforge-demo-01_2026-11-25_14-12-40.mp4`；ffprobe：H.264 / 1080×1920 / 30fps / **600 帧 / 20.0s / 5.1MB** + **AAC 48kHz 立体声**；`hyperframes audio --json`：**−19.6 LUFS / −1.3 dBTP / 0 clipping**（峰值时刻 17.745s 落在 s06 收尾 impact，已测量、未试听） |
-| 离线自检 | `scripts/self-test.mjs`（零 CLI、零网络） | **181/181**，含两次编译 10 个产物逐字节 sha256 相同 |
+| 离线自检 | `scripts/self-test.mjs`（零 CLI、零网络） | **238/238**（0.4.2 时 181），含两次编译 10 个产物逐字节 sha256 相同 |
 | 本机接线 | `scripts/install-local.mjs`：status / install / uninstall / verify，幂等、可回滚、默认 dry-run | 隔离 profile install→幂等→uninstall 全通过；live profile 已安装且技能注册 32/32 |
 | **参考片分析** | `scripts/analyze.mjs` + `lib/reference-analysis.mjs` / `lib/style-fingerprint.mjs`：切镜、关键帧、拼图、调色板、明暗、运动、BPM | 20s demo：6 镜 / 18 帧 / BPM 130（真值 129）；304.8s 参考片：76 镜 / 228 帧 / 14.96 切每分 / BPM 139.5（三段稳定性 spread 0） |
-| **模板提取** | `scripts/extract-template.mjs` + `lib/template-extract.mjs`：`cineforge/template/v1`，四层（风格 / 结构 / 动效 / 声音）+ slots | 真实参考片 → `knowledge/templates/template-world-search.json`，5 段结构 + 15/20/30/45s 缩放提案；`motion.cards` 恒空并标 `needs_review`（不假装能反解动效） |
-| **工作台（0.4.2 收口）** | `lib/client.js`（侧栏一行 + 配对 main 面板）+ `lib/server/`（**14 端点**，rev CAS）+ `lib/animatic.mjs` / `lib/lint.mjs` / `lib/verify-read.mjs` / `lib/publish.mjs` | 14 条端点全部实测 200；20s 工程 animatic `build_ms 2300`；`/verify` 回 7 张静帧 + contact-sheet URL；`/publish/preflight` 九项（demo 工程 3 项 block 未过 / 补齐后 8 pass）；`/publish/record` 未过 409 `PREFLIGHT_BLOCKED`、通过 200 + sidecar 落盘；组件级渲染冒烟 `MISS []` |
+| **模板提取（参考片 → 模板）** | `scripts/extract-template.mjs` + `lib/template-extract.mjs`：`cineforge/template/v1`，四层（风格 / 结构 / 动效 / 声音）+ slots | 真实参考片 → `knowledge/templates/template-world-search.json`，5 段结构 + 15/20/30/45s 缩放提案；`motion.cards` 恒空并标 `needs_review`（不假装能反解动效） |
+| **模板存档（工程 → 模板）** | `lib/template-save.mjs` + `POST /template/save` + `scripts/save-template.mjs`：把当前工程抽成模板 | 6 镜工程 → 6 张卡片序列 / 5 色带 role / BPM 129；**拿 6 条真实标题在模板里逐个搜，全部 false**；重复 id 409、只读工程 403 |
+| **工作台（0.5.0）** | `lib/client.js`（侧栏一行 + 配对 main 面板）+ `lib/server/`（**20 端点**，rev CAS）+ `lib/animatic.mjs` / `lib/lint.mjs` / `lib/goal.mjs` / `lib/template-apply.mjs` / `lib/template-save.mjs` / `lib/verify-read.mjs` / `lib/publish.mjs` | 20 条端点全部实测 200；`/themes` 回 4 套；`/reference/analyze` 切 6 镜 + 18 帧 + 拼图；`/template/save` 剥文案可验证；`/goal` start→advance→interrupt→resume 全通；20s 工程 animatic `build_ms 2300`；`/verify` 回 7 张静帧 + contact-sheet URL；`/publish/preflight` 九项（demo 工程 3 项 block 未过 / 补齐后 8 pass）；`/publish/record` 未过 409 `PREFLIGHT_BLOCKED`、通过 200 + sidecar 落盘；组件级渲染冒烟 `MISS []` |
 
 **GUI**：左侧栏「影铸工作台」一行 + 配对主面板（三栏：A 输入源 / B 分镜 / C 资源库）。**0.4.1 起可编辑，0.4.2 起可验收与发布检查**：
 
@@ -35,6 +36,7 @@ GitHub：[HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-
 - **静帧验收墙**：底栏「静帧验收」打开 —— contact-sheet 大图 + 逐帧缩略（点帧跳到对应镜卡）+ 八组 error/warning 计数 + 明细与修法。
 - **发布检查**：底栏「发布检查」打开九项清单（AI 显式/隐式标识、文案、极限词、数据安全、静帧验收为阻断项；封面、音频署名、画幅为提醒项），必须勾「我已逐条看过」才能记录发布回执；回执写明 `upload:'manual'`，一期不内置上传。
 - **只读锁定**：分镜放行且阶段越过 storyboard 后，分镜卡与镜头库都不可拖 —— 要改先撤回放行。
+- **0.5.0 新增**：A 区简报六个字段可直接改（改过的字段有标记）、平台 chip 可点（联动画幅/时长/安全区）、模板空位输入框；模板 tab 可选层套用、也可**把当前工程存成模板**；每镜有单镜编辑器（时长/能量/intent + 重置为 AI 建议）与锁定 `L`（AI 不覆盖）；顶栏 AUTO/GOAL 徽标 + ◐ 循环四套主题（暮色/日光/纸墨/夜航）。
 
 > 无法用桌面自动化点开面板截图：宿主策略拒绝向 DSH 自身窗口发送任何桌面输入（`WCU_POLICY_DENIED / HOST_INPUT_DENIED`），UI 验收只能靠 HTTP 端点 + 用户目视。这是宿主的安全边界，不是插件缺陷。
 
@@ -44,12 +46,13 @@ GitHub：[HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-
 
 ```bash
 # 0. 离线自检（零依赖，秒级）
-npm test                         # scripts/self-test.mjs：181/181
+npm test                         # scripts/self-test.mjs：238/238
 
 # 0b. 参考片分析（需要 ffmpeg；本机已装 8.1.1，脚本会自动探测）
 npm run analyze -- doctor                              # 探测 ffmpeg / ffprobe
 npm run analyze -- video <参考片.mp4>                   # 切镜 + 关键帧 + 拼图 + 风格指纹
-npm run extract-template -- <参考片.mp4> --id my-style   # 出 cineforge/template/v1 + Markdown
+npm run extract-template -- <参考片.mp4> --id my-style   # 参考片 → 模板（cineforge/template/v1 + Markdown）
+npm run template:save -- <工程目录> --id my-style --install  # 当前工程 → 模板（--install 才写进 knowledge/templates/）
 
 # 1. 分镜源：examples/demo-project.json（cineforge/storyboard/v1，抖音 9:16，6 镜 20s）
 #    真实使用由 cineforge-director 技能在对话中产出，并须经过分镜确认门
@@ -124,7 +127,7 @@ curl -H 'Origin: http://127.0.0.1:<port>' http://127.0.0.1:<port>/dsh-cineforge/
 | `lib/hf-template.html` / `.css` / `hf-shot.html` / `hf-timeline.js` | HyperFrames standalone 组合模板（占位符替换） |
 | `scripts/compile-hf.mjs` | 分镜 JSON → HyperFrames 工程编译器 |
 | `scripts/verify-hf.mjs` | 静帧验收：check 报告 + snapshot + contact-sheet + JSON 报告 |
-| `scripts/self-test.mjs` | 完全离线的 60 项自检（含确定性 sha256 比对） |
+| `scripts/self-test.mjs` | 完全离线的 238 项自检（含确定性 sha256 比对、模板存取的泄漏检查） |
 | `scripts/install-local.mjs` | 本机接线：幂等安装 / 状态 / 校验 / 回滚 |
 | `scripts/fetch-upstream.mjs` | 按 catalog 精确拉取上游快照（API 取 SHA → codeload tar.gz） |
 | `scripts/build-card-index.mjs` | 从上游配方卡重建品味索引（幂等、可重跑） |
@@ -145,7 +148,7 @@ curl -H 'Origin: http://127.0.0.1:<port>' http://127.0.0.1:<port>/dsh-cineforge/
 ## 规格
 
 - **类型**：DSH 插件（npm 包 + `cordis.patch.yml` + `ctx.skills.register`），非独立应用
-- **版本 / 状态**：0.4.2 / runtime + workbench（已接线、已装进本机 DSH，可跑通到带声 MP4；工作台 0.4.2 可编辑、可出 animatic、可做静帧验收与发布前检查；成片仍 NOT FOR PUBLISH）
+- **版本 / 状态**：0.5.0 / runtime + workbench（已接线、已装进本机 DSH，可跑通到带声 MP4；工作台可编辑、可出 animatic、可做静帧验收与发布前检查、可导入参考片与存取模板；成片仍 NOT FOR PUBLISH）
 - **主渲染后端**：HyperFrames（DSH 内置 `dsh-hyperframes` 0.14.1；CLI 钉 `hyperframes@0.9.88`），运行时依赖，不 vendor
 - **次渲染后端**：Remotion（自定 License，仅用于复刻上游调校过的 TSX 镜头，**本插件不分发**）
 - **上游**：[video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft)，Apache-2.0，作者 Wei Yihao，锁定 SHA `59f3e9b9e936ff2bce0e18446226d770a3f2f61f`

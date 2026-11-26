@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// CineForge · 离线自检（零依赖、零网络、零 CLI） v0.4.2（含 Cordis Proxy 回归 + 参考片分析 + 工作台能动 + 收口验收）
+// CineForge · 离线自检（零依赖、零网络、零 CLI） v0.5.0（含 Cordis Proxy 回归 + 参考片分析 + 工作台能动 + 收口验收 + GOAL/模板/主题）
 // 用法：node scripts/self-test.mjs
 // 校验：插件清单 / 补丁 / 3 技能 frontmatter 与注册 / health 工具 / 知识库 JSON / 卡库 /
 //       编译确定性（8 文件 + 复制资产）/ v2 manifest 契约 / 音频与 AIGC / 单一事实源。
@@ -58,7 +58,7 @@ async function main() {
   check("engines.dsh", pkg.engines && pkg.engines.dsh === ">=0.2.2-rc.3");
   check("license Apache-2.0", pkg.license === "Apache-2.0");
   // v0.4.0 工作台：客户端半身与槽位契约（依据 dsh-config-sync-plugin/client.js 头注释）
-  check("package.json version 0.4.2", pkg.version === "0.4.2", pkg.version);
+  check("package.json version 0.5.0", pkg.version === "0.5.0", pkg.version);
   check("exports[\"./client\"]", pkg.exports && pkg.exports["./client"] === "./lib/client.js");
   check("dsh.client web", pkg.dsh && pkg.dsh.client && pkg.dsh.client.platform === "web");
   check("dsh.client.inject 为字符串数组", Array.isArray(pkg.dsh.client.inject) && pkg.dsh.client.inject.every((x) => typeof x === "string"));
@@ -324,7 +324,7 @@ async function main() {
   check("routes 导出 animatic/lint/gate", rt.indexOf("postAnimatic") >= 0 && rt.indexOf("postLint") >= 0 && rt.indexOf("postGate") >= 0);
   const svc = readFileSync(join(ROOT, "lib", "server", "workbench-service.mjs"), "utf8");
   check("service 注册三条新路由", svc.indexOf('"/animatic"') >= 0 && svc.indexOf('"/lint"') >= 0 && svc.indexOf('"/gate"') >= 0);
-  check("compile 版本号 0.4.2", readFileSync(join(ROOT, "scripts", "compile-hf.mjs"), "utf8").indexOf('compiler_version: "0.4.2"') >= 0);
+  
   // CLI 的 --animatic 通道（不真跑 ffmpeg，只验参数解析与接线存在）
   const cph = readFileSync(join(ROOT, "scripts", "compile-hf.mjs"), "utf8");
   check("compile CLI 支持 --animatic", cph.indexOf('"--animatic"') >= 0 && cph.indexOf("buildAnimatic") >= 0);
@@ -375,8 +375,116 @@ async function main() {
   check("client 未保存拦截", cl.indexOf("beforeunload") >= 0 && cl.indexOf("还有改动没保存完") >= 0);
   check("routes 导出 verify/preflight/record", rt.indexOf("getVerify") >= 0 && rt.indexOf("getPreflight") >= 0 && rt.indexOf("postPublishRecord") >= 0);
   check("service 注册收口三路由", svc.indexOf('"/verify"') >= 0 && svc.indexOf('"/publish/preflight"') >= 0 && svc.indexOf('"/publish/record"') >= 0);
-  check("compile 版本号 0.4.2", readFileSync(join(ROOT, "scripts", "compile-hf.mjs"), "utf8").indexOf('compiler_version: "0.4.2"') >= 0);
-  check("package.json 0.4.2", readJson(join(ROOT, "package.json")).version === "0.4.2");
+  check("compile 版本号 0.5.0", readFileSync(join(ROOT, "scripts", "compile-hf.mjs"), "utf8").indexOf('compiler_version: "0.5.0"') >= 0);
+  check("package.json 已升至 0.5.0", readJson(join(ROOT, "package.json")).version === "0.5.0");
+
+  // ── v0.5.0 五条新需求：GOAL / 模板套用 / 主题 / 参考片导入 / 局部改 ──────
+  const goalMod = await import("../lib/goal.mjs");
+  const g0 = goalMod.newGoalState({ stage: "storyboard", at: "2026-01-01T00:00:00.000Z" });
+  check("goal 初始 running", g0.status === "running" && g0.stage === "STORYBOARD");
+  check("goal 12 阶段", goalMod.GOAL_STAGES.length === 12 && goalMod.GOAL_STAGES[11] === "PUBLISHED");
+  check("goal 两硬门", goalMod.HARD_GATES.length === 2 && goalMod.HARD_GATES.indexOf("storyboard_approve") >= 0);
+  const blockedGates = { storyboard: { open: false } };
+  const ca1 = goalMod.canAutoAdvance(g0, blockedGates);
+  check("goal 硬门未放行不能自动推进", ca1.ok === false && ca1.waiting_for === "storyboard_approve", JSON.stringify(ca1));
+  const ca2 = goalMod.canAutoAdvance(g0, { storyboard: { open: true } });
+  check("goal 硬门放行后可推进", ca2.ok === true);
+  const gOver = Object.assign({}, g0, { overrides: [{ gate: "storyboard_approve", by: "user" }] });
+  check("goal 手写越门可推进", goalMod.canAutoAdvance(gOver, blockedGates).ok === true);
+  const gInt = goalMod.requestInterrupt(g0, "2026-01-01T00:00:01.000Z");
+  check("goal 打断先挂标记", gInt.interrupt_requested === true && gInt.status === "running");
+  check("goal 打断挂起时不推进", goalMod.canAutoAdvance(gInt, { storyboard: { open: true } }).reason === "interrupt-pending");
+  const gSafe = goalMod.reachSafePoint(gInt, { stage: "ASSETS", completed_stage: "STORYBOARD", at: "2026-01-01T00:00:02.000Z" });
+  check("goal 到安全点才置 interrupted", gSafe.status === "interrupted" && gSafe.interrupt_requested === false && gSafe.stage === "ASSETS");
+  check("goal 恢复回 running", goalMod.resumeGoal(gSafe).status === "running");
+  check("goal 暂停立即生效", goalMod.pauseGoal(g0).status === "waiting");
+  check("goal 无状态不推进", goalMod.canAutoAdvance(null, {}).reason === "no-goal");
+  check("goalSummary 给文案", typeof goalMod.goalSummary(g0).text === "string" && goalMod.goalSummary(g0).text.length > 0);
+
+  const tplMod = await import("../lib/template-apply.mjs");
+  const badTpl = { schema: "cineforge/template/v1", id: "t", name: "T", layers: ["style"], slots: [], style: { palette: [], copy: "具体文案" } };
+  const vBad = tplMod.validateTemplate(badTpl);
+  check("模板拒绝内容字段", vBad.ok === false && vBad.errors.join(",").indexOf("copy") >= 0, JSON.stringify(vBad.errors));
+  const slotTpl = { schema: "cineforge/template/v1", id: "t2", name: "T2", layers: ["style"], slots: ["product_name"], style: { palette: [], copy_skeleton: ["{{product_name}}"] } };
+  check("模板允许 {{slot}} 空位", tplMod.validateTemplate(slotTpl).ok === true, JSON.stringify(tplMod.validateTemplate(slotTpl).errors));
+  const roles = tplMod.paletteRoles([
+    { hex: "#eeeeee", share: 0.6, sat: 0.02 },
+    { hex: "#111111", share: 0.2, sat: 0.05 },
+    { hex: "#d3923c", share: 0.1, sat: 0.72 },
+  ]);
+  check("调色板角色 ground 取占比最高", roles.ground === "#eeeeee" && roles.ink === "#111111" && roles.accent === "#d3923c", JSON.stringify(roles).slice(0, 120));
+  const noAccent = tplMod.paletteRoles([{ hex: "#aaaaaa", share: 0.7, sat: 0.05 }, { hex: "#222222", share: 0.3, sat: 0.03 }]);
+  check("没有饱和色不硬编 accent", noAccent.accent === null);
+  const proj0 = { project: { id: "x", fps: 30, duration_s: 20, aspect: "9:16" }, design_spec: {}, shots: [{ copy: { title: "原文案" }, duration_f: 90 }], audio: {} };
+  const goodTpl = {
+    schema: "cineforge/template/v1", id: "gt", name: "GT", layers: ["style", "structure", "sound"], slots: [],
+    style: { palette: [{ hex: "#101418", share: 0.5, sat: 0.1 }, { hex: "#f2ede2", share: 0.3, sat: 0.05 }, { hex: "#c8552c", share: 0.08, sat: 0.68 }], motion_tokens_id: "snappy" },
+    structure: { durations_f: [90, 90, 120, 90] }, sound: { bpm: 128 },
+  };
+  const ap = tplMod.applyTemplate(goodTpl, proj0, { layers: ["style", "structure", "sound"], duration_s: 20, fps: 30 });
+  check("套用模板成功且列层", ap.ok === true && ap.applied.indexOf("style") >= 0 && ap.applied.indexOf("structure") >= 0, JSON.stringify(ap.applied));
+  check("套用结构生成四镜骨架", ap.project.shots.length === 4 && ap.project.shots.reduce((a, s) => a + s.duration_f, 0) === 600, JSON.stringify(ap.project.shots.map((s) => s.duration_f)));
+  check("套用保留原文案", ap.project.shots[0].copy && ap.project.shots[0].copy.title === "原文案");
+  check("套用不改 publish / goal", ap.project.publish === undefined && ap.project.goal === undefined);
+  check("套用记录出处", ap.project.template && ap.project.template.id === "gt" && ap.project.template.slots_complete === true);
+  const apSlots = tplMod.applyTemplate(Object.assign({}, goodTpl, { slots: ["product_name", "cta"] }), proj0, { layers: ["style"] });
+  check("空位未填则不能进分镜", tplMod.canEnterStoryboard(apSlots.project).ok === false && tplMod.canEnterStoryboard(apSlots.project).missing.length === 2);
+  check("空位填完可进分镜", tplMod.canEnterStoryboard({ template: { slots: { product_name: "A", cta: "B" } } }).ok === true);
+  check("无模板可直接进分镜", tplMod.canEnterStoryboard({}).ok === true);
+
+  // ── 0.5.0：工程 → 模板（需求 4 的另一半）──────────────────────────
+  const tsMod = await import("../lib/template-save.mjs");
+  check("模板 id 只留安全字符", tsMod.templateIdOf("My Promo 片!") === "my-promo", tsMod.templateIdOf("My Promo 片!"));
+  const autoId = tsMod.templateIdOf("中文标题", 1700000000000);
+  check("中文标题退化到时间戳 id", /^tpl-[a-z0-9]{1,6}$/.test(autoId), autoId);
+  check("模板文件名防穿越", tsMod.templateFileName("../etc") === null && tsMod.templateFileName("ok-id") === "template-ok-id.json");
+
+  const saveProj = {
+    project: { id: "demo-x", platform: "douyin", aspect: "9:16", fps: 30, duration_s: 6, title: "演示项目" },
+    design_spec: { palette: { ground: "#0B0E14", ink: "#F4F1EA", accent: "#D3923C", muted: "#C9C3B6", panel: "#161B24", grid: "rgba(211,146,60,0.10)" }, typography: { display: "sans", body: "sans" }, motion_tokens_id: "energetic-bold" },
+    shots: [
+      { card_id: "brand-ink-open", duration_f: 90, energy: "mid", copy: { title: "产品名在这里", sub: "具体文案不许进模板" }, caption: "字幕也是内容", action: "动效动作也是内容" },
+      { card_id: "blur-slide", duration_f: 90, energy: "high", copy: { title: "第二镜文案" } },
+    ],
+    audio: { bgm: { ref: "x.mp3", bpm: 129, beat_grid: [0, 0.465, 0.93], hit_list: [0, 3], volume: 0.42 }, sfx: [{ file: "whoosh-fast.mp3", peak_f: 45, volume: 0.7 }, { file: "impact-cine.wav", peak_f: 150, volume: 0.8 }] },
+  };
+  const saved = tsMod.templateFromProject(saveProj, { name: "我的流程", slots: ["product_name"] });
+  check("工程存模板成功", saved.ok === true && saved.template.schema === "cineforge/template/v1", JSON.stringify(saved.errors));
+  const sj = JSON.stringify(saved.template);
+  check("存模板剥掉具体文案", sj.indexOf("产品名在这里") < 0 && sj.indexOf("具体文案不许进模板") < 0 && sj.indexOf("字幕也是内容") < 0 && sj.indexOf("动效动作也是内容") < 0);
+  check("存模板不写绝对路径", sj.indexOf("D:") < 0 && sj.indexOf("\\\\") < 0 && saved.template.from_project.content_stripped === true);
+  check("存模板保留卡片序列", saved.template.motion.cards.join(",") === "brand-ink-open,blur-slide");
+  check("存模板记调色板角色", saved.template.style.palette.length === 5 && saved.template.style.palette[0].role === "ground" && saved.template.style.palette[2].role === "accent", JSON.stringify(saved.template.style.palette));
+  check("存模板结构总帧守恒", saved.template.structure.durations_f.reduce((a, b) => a + b, 0) === 180 && saved.template.structure.duration_stats.median === 3);
+  check("存模板能量弧按时间摊开", saved.template.structure.energy_arc.length === 2 && saved.template.structure.energy_arc[1].at_s === 3, JSON.stringify(saved.template.structure.energy_arc));
+  check("存模板 SFX 只记相对位置", saved.template.sound.sfx_pattern.length === 2 && saved.template.sound.sfx_pattern[0].at_ratio === 0.25 && saved.template.sound.bpm === 129, JSON.stringify(saved.template.sound.sfx_pattern));
+  check("存出来的模板过得了校验", tplMod.validateTemplate(saved.template).ok === true, JSON.stringify(tplMod.validateTemplate(saved.template).errors));
+  const noShots = tsMod.templateFromProject({ project: { id: "e" }, shots: [] }, {});
+  check("无分镜拒绝存模板", noShots.ok === false && noShots.errors.join("").indexOf("还没有分镜") >= 0);
+
+  const themes = readJson(join(ROOT, "knowledge", "themes.json"));
+  check("主题库四套", themes.schema === "cineforge/themes/v1" && themes.themes.length === 4, String(themes.themes.length));
+  const tk = Object.keys(themes.themes[0].tokens).sort().join(",");
+  check("四套主题 token 键一致", themes.themes.every((t) => Object.keys(t.tokens).sort().join(",") === tk));
+  check("主题含 dark/light", themes.themes.some((t) => t.id === "dark") && themes.themes.some((t) => t.id === "light"));
+  check("主题默认在列表里", themes.themes.some((t) => t.id === themes.default));
+
+  check("client GOAL 条", cl.indexOf("function GoalBar") >= 0 && cl.indexOf("cfw-goalbar") >= 0 && cl.indexOf("onGoal") >= 0);
+  check("client 单镜编辑器", cl.indexOf("cfw-editor") >= 0 && cl.indexOf("onEditShot") >= 0 && cl.indexOf("重置为 AI 建议") >= 0);
+  check("client 锁定可切换", cl.indexOf("onToggleLock") >= 0 && cl.indexOf("lk.off") >= 0);
+  check("client 平台联动安全区", cl.indexOf("PLATFORM_SAFE") >= 0 && cl.indexOf("onPlatform") >= 0);
+  check("client 参考片导入", cl.indexOf("cfw-refsheet") >= 0 && cl.indexOf("onAnalyze") >= 0 && cl.indexOf("reference/analyze") >= 0);
+  check("client 模板层开关与套用", cl.indexOf("LAYER_CN") >= 0 && cl.indexOf("onApplyTpl") >= 0 && cl.indexOf("template/apply") >= 0);
+  check("client 模板空位输入", cl.indexOf("cfw-slot") >= 0 && cl.indexOf("onSlot") >= 0);
+  check("client 主题注入", cl.indexOf("applyThemeCss") >= 0 && cl.indexOf("dsh-cineforge-theme-tokens") >= 0 && cl.indexOf("onTheme") >= 0);
+  check("client 简报可编辑", cl.indexOf("brief_user_edited") >= 0 && cl.indexOf("onBrief") >= 0);
+  check("routes 导出存模板处理", rt.indexOf("postTemplateSave") >= 0 && rt.indexOf("templateFromProject") >= 0 && rt.indexOf("TEMPLATE_CONTENT_LEAK") >= 0);
+  check("service 注册 /template/save", svc.indexOf('"/template/save"') >= 0 && svc.indexOf("postTemplateSave") >= 0);
+  check("client 存为模板入口", cl.indexOf("onTplSave") >= 0 && cl.indexOf("template/save") >= 0 && cl.indexOf("cfw-save-tpl") >= 0);
+  check("routes 导出 0.5.0 六处理", rt.indexOf("getThemes") >= 0 && rt.indexOf("postTemplateApply") >= 0 && rt.indexOf("postReferenceAnalyze") >= 0 && rt.indexOf("postReferenceClear") >= 0 && rt.indexOf("getGoal") >= 0 && rt.indexOf("postGoal") >= 0);
+  check("service 注册 0.5.0 五路由", svc.indexOf('"/themes"') >= 0 && svc.indexOf('"/template/apply"') >= 0 && svc.indexOf('"/reference/analyze"') >= 0 && svc.indexOf('"/reference/clear"') >= 0 && svc.indexOf('"/goal"') >= 0);
+  check("compile 版本号 0.5.0", readFileSync(join(ROOT, "scripts", "compile-hf.mjs"), "utf8").indexOf('compiler_version: "0.5.0"') >= 0);
+  check("package.json 0.5.0", readJson(join(ROOT, "package.json")).version === "0.5.0");
 
   const failed = results.filter((r) => !r.ok);
   const summary = {
@@ -384,7 +492,7 @@ async function main() {
     schema: "cineforge/self-test/v1",
     plugin: pluginName,
     inject,
-    version: "0.4.2",
+    version: "0.5.0",
     total: results.length,
     passed: results.length - failed.length,
     failed,

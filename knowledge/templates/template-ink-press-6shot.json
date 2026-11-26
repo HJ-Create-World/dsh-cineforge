@@ -1,0 +1,217 @@
+{
+  "schema": "cineforge/template/v1",
+  "id": "ink-press-6shot",
+  "name": "影铸 20s 六镜（Ink Press）",
+  "version": 1,
+  "origin": "project-saved",
+  "from_project": {
+    "project_id": "cineforge-demo-01",
+    "platform": "douyin",
+    "aspect": "9:16",
+    "fps": 30,
+    "shot_count": 6,
+    "duration_s": 20,
+    "saved_at": "2026-11-25T13:35:55.915Z",
+    "content_stripped": true
+  },
+  "layers": [
+    "style",
+    "structure",
+    "motion",
+    "sound"
+  ],
+  "style": {
+    "palette": [
+      {
+        "hex": "#0b0e14",
+        "role": "ground"
+      },
+      {
+        "hex": "#f4f1ea",
+        "role": "ink"
+      },
+      {
+        "hex": "#d3923c",
+        "role": "accent"
+      },
+      {
+        "hex": "#c9c3b6",
+        "role": "muted"
+      },
+      {
+        "hex": "#161b24",
+        "role": "panel"
+      }
+    ],
+    "typography": {
+      "display": "sans-serif",
+      "body": "sans-serif"
+    },
+    "motion_tokens_id": "energetic-bold",
+    "tone": null,
+    "aspect": "9:16",
+    "safe_area": {
+      "note": "模板不记平台安全区；套用后按目标平台重新检查"
+    }
+  },
+  "structure": {
+    "shot_count": 6,
+    "durations_f": [
+      90,
+      90,
+      120,
+      120,
+      90,
+      90
+    ],
+    "durations_s": [
+      3,
+      3,
+      4,
+      4,
+      3,
+      3
+    ],
+    "duration_stats": {
+      "min": 3,
+      "p25": 3,
+      "median": 3,
+      "p75": 3.75,
+      "max": 4,
+      "mean": 3.33,
+      "cuts_per_min": 18
+    },
+    "energy_arc": [
+      {
+        "at_s": 0,
+        "level": "low",
+        "rank": 0
+      },
+      {
+        "at_s": 3,
+        "level": "mid",
+        "rank": 1
+      },
+      {
+        "at_s": 6,
+        "level": "mid-high",
+        "rank": 2
+      },
+      {
+        "at_s": 10,
+        "level": "mid-high",
+        "rank": 2
+      },
+      {
+        "at_s": 14,
+        "level": "low",
+        "rank": 0
+      },
+      {
+        "at_s": 17,
+        "level": "peak",
+        "rank": 4
+      }
+    ],
+    "energy_curve": "opening(low) -> function(mid-high) -> breath(low) -> outro(peak)",
+    "aspect": "9:16",
+    "platform": "douyin"
+  },
+  "motion": {
+    "cards": [
+      "brand-ink-open",
+      "blur-slide",
+      "card-stack",
+      "confirm-gate",
+      "data-counter",
+      "outro-group-photo-launch"
+    ],
+    "guess": [],
+    "needs_review": false,
+    "note": "这份模板的卡片序列来自已经做完并验收过的工程，可直接复用；换产品后卡片本身的文案仍要重写。"
+  },
+  "sound": {
+    "bpm": 129,
+    "bpm_is_estimate": false,
+    "beat_grid": [],
+    "hit_list": [
+      0,
+      3,
+      6,
+      10,
+      14,
+      17
+    ],
+    "sfx_pattern": [
+      {
+        "file": "impact-cine",
+        "at_ratio": 0.03,
+        "volume": 0.85
+      },
+      {
+        "file": "whoosh-fast",
+        "at_ratio": 0.19,
+        "volume": 0.7
+      },
+      {
+        "file": "transition-snap",
+        "at_ratio": 0.31,
+        "volume": 0.8
+      },
+      {
+        "file": "transition-snap",
+        "at_ratio": 0.33,
+        "volume": 0.72
+      },
+      {
+        "file": "transition-snap",
+        "at_ratio": 0.34,
+        "volume": 0.64
+      },
+      {
+        "file": "click-camera",
+        "at_ratio": 0.51,
+        "volume": 0.85
+      },
+      {
+        "file": "click-camera",
+        "at_ratio": 0.53,
+        "volume": 0.85
+      },
+      {
+        "file": "click-camera",
+        "at_ratio": 0.55,
+        "volume": 0.55
+      },
+      {
+        "file": "transition-soft",
+        "at_ratio": 0.72,
+        "volume": 0.6
+      },
+      {
+        "file": "click-camera",
+        "at_ratio": 0.74,
+        "volume": 0.45
+      },
+      {
+        "file": "click-camera",
+        "at_ratio": 0.76,
+        "volume": 0.85
+      },
+      {
+        "file": "impact-cine",
+        "at_ratio": 0.88,
+        "volume": 0.9
+      }
+    ],
+    "cut_beat_alignment": null
+  },
+  "slots": [
+    "product_name"
+  ],
+  "caveats": [
+    "这份模板从你自己的工程提取：只含风格、镜长配比、卡片序列、节奏，不含任何文案/产品名/客户信息。",
+    "复用后仍需重写每一镜的 copy 与 caption —— 模板给的是节奏骨架，不是台词。",
+    "BGM 文件本身不复制，只记 BPM 与 SFX 相对位置；套用后在自己工程里挑音轨。"
+  ]
+}
