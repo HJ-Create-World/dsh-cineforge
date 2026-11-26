@@ -29,13 +29,13 @@
 
 **一期验收（实测）**：在 DSH 对话里说「给我的 XX 做个 45 秒抖音视频」，技能自动触发 → 分镜确认 → 输出 MP4 + 终检报告。
 
-编译器链路已在 `examples/demo-project.json` 上端到端跑通：`compile-hf.mjs`（8 文件 + 本地 GSAP / 音频资产）→ `verify-hf.mjs`（check 0 error / 7 帧静帧）→ `hyperframes render` → ffprobe 核对（H.264 / 1080×1920 / 30fps / 600 帧 / 20.0s / 5.1MB + AAC 48kHz 立体声）→ `hyperframes audio --json`（0.3.2 实测 −19.6 LUFS / −1.3 dBTP / 0 clipping，峰值 17.745s 落 s06，已测量未试听）。`self-test.mjs` **129/129**（0.4.0）、`install-local.mjs verify` **32/32**（隔离 profile 真实 `npm pack` → `npm install` → import，以及 live `desktop` profile）。
+编译器链路已在 `examples/demo-project.json` 上端到端跑通：`compile-hf.mjs`（8 文件 + 本地 GSAP / 音频资产）→ `verify-hf.mjs`（check 0 error / 7 帧静帧）→ `hyperframes render` → ffprobe 核对（H.264 / 1080×1920 / 30fps / 600 帧 / 20.0s / 5.1MB + AAC 48kHz 立体声）→ `hyperframes audio --json`（0.3.2 实测 −19.6 LUFS / −1.3 dBTP / 0 clipping，峰值 17.745s 落 s06，已测量未试听）。`self-test.mjs` **238/238**（0.5.0）、`install-local.mjs verify` **32/32**（隔离 profile 真实 `npm pack` → `npm install` → import，以及 live `desktop` profile）。
 
-**运行期接线（已完成）**：用户 m00741 授权后，已把插件装进 live `desktop` profile（`install-local.mjs install --apply` + `pnpm install` 落地 symlink），0.3.0 装入时 verify 27/27；0.3.2 用真 node 复核得 **32/32**（0.3.1 起新增 5 条 Cordis/Proxy 回归断言），`imported_from` 指向 `node_modules/dsh-cineforge`，技能注册确认。备份在 `.local/profile-backup/desktop-before-install-*.json`；一键回滚 `node scripts/install-local.mjs uninstall --apply`。**GUI**：0.4.0 起带图形界面 —— `package.json` 已加 `exports["./client"]` 与 `dsh.client = {platform:"web"}`，`lib/client.js` 注册侧栏一行 + 配对 main 面板（只读骨架）。
+**运行期接线（已完成）**：用户 m00741 授权后，已把插件装进 live `desktop` profile（`install-local.mjs install --apply` + `pnpm install` 落地 symlink），0.3.0 装入时 verify 27/27；0.3.2 用真 node 复核得 **32/32**（0.3.1 起新增 5 条 Cordis/Proxy 回归断言），`imported_from` 指向 `node_modules/dsh-cineforge`，技能注册确认。备份在 `.local/profile-backup/desktop-before-install-*.json`；一键回滚 `node scripts/install-local.mjs uninstall --apply`。**GUI**：0.4.0 起带图形界面 —— `package.json` 已加 `exports["./client"]` 与 `dsh.client = {platform:"web"}`，`lib/client.js` 注册侧栏一行 + 配对 main 面板；0.5.0 起面板可编辑、可验收、可发布检查、可导参考片与存取模板，四套主题可切。
 
 **插件落地形态（已实测）**：DSH 插件 = npm 包，声明全在 `package.json` 的 `dsh` 字段，靠 `cordis.patch.yml` 的 `- insert:` 行加载；能力用 `ctx.skills.register` / `ctx.tools` 注册；Web UI 另用 `exports["./client"]` + `ctx.slots.inject`。客户端 HMR 走 `/plugins/events` SSE（需 `pnpm run dev:web` + watcher，Electron 不走此路）。安装：`dsh plugin --profile desktop add <spec>`。
 
-## 二期 · 独立视频创作工作台（0.4.x）
+## 二期 · 独立视频创作工作台（0.4.x → 0.5.x）· ✅ 全部完成 2026-11-25
 
 ### 0.4.0 · 参考片分析转正（C）+ 工作台骨架（A）· ✅ 已完成 2026-11-25
 
@@ -53,30 +53,37 @@
 | 自检 | `scripts/self-test.mjs` 97 → **129/129** | ✅ |
 | 只读边界 | 只读工程 / 看分镜 / 看镜头库；拖拽与放行未做 | ⬜ 0.4.1 |
 
-### 0.4.1 · 能动（下一版）
+### 0.4.1 · 能动 · ✅ 已完成 2026-11-25
 
-- [ ] 分镜卡拖拽重排（写回 `shots[]` 顺序 + `from` 重算）
-- [ ] 时长拉伸（拖右边缘改 `duration_f`，同步能量曲线与时间轴）
-- [ ] 从 C 区镜头库拖卡进 B 区（新建镜 / 替换镜）
-- [ ] animatic 播放器（`compile-hf.mjs --animatic`：540p 静帧驱动 + 真实时间轴与音轨）
-- [ ] 呼吸检查（每镜落定后的静帧停留时长告警）
-- [ ] 确认放行门（`stage` 推进需要显式确认，写 `approved_at` / `approved_by`）
-- [ ] `POST /project/save` 的 409 冲突 UI（保留我的 / 用远端的 / 手动看 diff）
+- [x] 分镜卡拖拽重排（写回 `shots[]` 顺序 + `from` 重算）
+- [x] 时长拉伸（拖右边缘改 `duration_f`，同步能量曲线与时间轴）
+- [x] 从 C 区镜头库拖卡进 B 区（新建镜 / 替换镜）
+- [x] animatic 播放器（`lib/animatic.mjs`：540p 静帧驱动 + 真实时间轴与音轨，20s 片 2.3s 出片）
+- [x] 呼吸检查（`lib/lint.mjs` 的 R1/R3/R4，落定后停留不足会报）
+- [x] 确认放行门（`POST /gate`，写 `gates.storyboard` 并把 stage 推到 assets）
+- [x] `POST /project/save` 的 409 冲突 UI（保留我的 / 用远端的 / 先不动）
 
-### 0.4.2 · 收口
+### 0.4.2 · 收口 · ✅ 已完成 2026-11-25
 
-- [ ] 静帧验收墙（7–12 帧网格 + 点击放大 + 单帧重渲）
-- [ ] 终检报告可视化（27 条准则逐条 ✓/✗/N/A + 帧号证据）
-- [ ] 发布确认弹窗（八项：标题/简介/封面/标签/AI 显式标识/AI 隐式标识/版权/平台）
-- [ ] 未保存拦截、只读锁定提示、后端不可用时的降级占位
+- [x] 静帧验收墙（contact-sheet + 逐帧缩略，点帧跳到对应镜卡）
+- [x] 终检报告可视化（八组 error/warning 计数 + 明细与修法；27 条准则的逐条判定仍在 `docs/QA-*`）
+- [x] 发布确认弹窗（**九项**：AI 显式 / AI 隐式 / 文案 / 极限词 / 数据安全 / 静帧验收为阻断项，封面 / 音频署名 / 画幅为提醒项）
+- [x] 未保存拦截、只读锁定提示、后端不可用时的降级占位
 
-### 0.5.0 · 五条新需求界面
+### 0.5.0 · 五条新需求界面 · ✅ 已完成 2026-11-25
 
-- [ ] AI 自动分镜 + 局部修改（`locked` 路径数组 + `user_edited` 视觉标记）
-- [ ] GOAL 模式（阶段机 + 安全点打断 + 软硬门）
-- [ ] 参考视频导入（UI 接上 0.4.0 的分析能力，展示切镜拼图与指纹）
-- [ ] 流程存模板（C 区模板 tab + 五层复用开关 + slots 校验）
-- [ ] 明暗双主题（已具备 token 基础）+ 更多主题扩展点
+- [x] AI 自动分镜 + 局部修改（`locked[]` 路径数组 + `user_edited[]` 视觉标记 + 单镜编辑器 + 重置为 AI 建议）
+- [x] GOAL 模式（`lib/goal.mjs`：阶段机 + 安全点打断 + 两个硬门永不自动越过）
+- [x] 参考视频导入（`POST /reference/analyze`：切镜拼图 + 调色板 + 明暗 + 运动 + BPM 全部进 A 区视频 tab）
+- [x] 流程存模板（C 区模板 tab：从参考片提取 + **把当前工程存成模板** + 五层复用开关 + slots 校验）
+- [x] 明暗双主题 + 扩展点（`knowledge/themes.json` 四套：暮色 / 日光 / 纸墨 / 夜航；加主题 = 加一条 JSON）
+
+### 0.6.0 · 局部重跑与发布闭环（下一版）
+
+- [ ] 局部重跑三粒度：工程级 / 镜头级（只重做 S03）/ 字段级（只改 S03.props.blur），失效由 `stale` 标记驱动
+- [ ] 镜头级重渲把 animatic 与静帧墙一起刷新
+- [ ] 发布闭环：`biliup` 适配器（用户自装，dry-run + 显式确认 + requestId 幂等）
+- [ ] dshmarket 上架（仓库已满 1 天）+ awesome-dsh-plugin PR
 
 ## 二期原始清单（历史，部分已被上面 0.4.x 覆盖）
 

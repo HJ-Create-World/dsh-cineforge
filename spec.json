@@ -1,7 +1,7 @@
 {
   "name": "CineForge",
   "cn_name": "影铸 · AI 视频导演台",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "type": "dsh-plugin",
   "status": "runtime+workbench",
   "repository": "https://github.com/HJ-Create-World/dsh-cineforge",
@@ -65,7 +65,7 @@
       "audio_measurement": "lufsIntegrated -19.6 / truePeakDb -1.3 / clipping 0 / peak moment 17.745s (0.3.2 film, measured, not listened)"
     },
     "verification": {
-      "self_test": "129/129 (0.4.0; C-phase reference analysis + template extraction assertions added)",
+      "self_test": "238/238 (0.5.0; GOAL / reference import / template save+apply / themes assertions added)",
       "install_verify": "32/32 (isolated npm pack install + live desktop profile; 5 Cordis/Proxy regression checks added in 0.3.1)",
       "hf_check": "0 error / 10 warning (7 structure lint subcomposition phase-2 + 3 craft line_unread); layout/motion/contrast/audio all 0/0",
       "static_frames": "7 snapshots, all non-zero bytes, contact-sheet reviewed by eye",
@@ -169,21 +169,133 @@
     "workbench": {
       "stage": "0.4.0 skeleton (read-only)",
       "entry": "lib/client.js",
-      "slots": ["sidebar.panellist (id=dsh-cineforge)", "main (key=dsh-cineforge)"],
-      "routes": ["GET /health", "GET /projects", "GET /project?name=", "POST /project/save", "POST /project/create", "GET /cards", "GET /templates", "GET /asset?src=&id="],
+      "slots": [
+        "sidebar.panellist (id=dsh-cineforge)",
+        "main (key=dsh-cineforge)"
+      ],
+      "routes": [
+        "GET /health",
+        "GET /projects",
+        "GET /project?name=",
+        "POST /project/save",
+        "POST /project/create",
+        "GET /cards",
+        "GET /templates",
+        "GET /asset?src=&id="
+      ],
       "workspace_root_resolution": "config/env > video-workspace (registry, has 03_Video/02_MyWork, latest updatedAt) > cwd-match > first-workspace > cwd",
       "projects_root": "03_Video/02_MyWork",
       "theme": "CSS token override in .cfw + [data-theme=light]; not persisted to project.json"
     },
     "measured": {
       "self_test": "129/129",
-      "demo_20s": { "shots": 6, "keyframes": 18, "palette_top": "#10151b 43.5%", "dark_ratio": 0.954, "bpm": 130, "bpm_truth": 129 },
-      "reference_304s": { "file": "world.search(you).mp4", "size_bytes": 38001030, "shots": 76, "keyframes": 228, "median_shot_s": 2.25, "cuts_per_min": 14.96, "palette_top": "#e6e3da 42.7%", "ink": "#10141a 14.2%", "tone_dark_mid_light": [13.9, 3.3, 82.8], "bpm": 139.5, "bpm_stability_spread": 0, "template": "knowledge/templates/template-world-search.json" }
+      "demo_20s": {
+        "shots": 6,
+        "keyframes": 18,
+        "palette_top": "#10151b 43.5%",
+        "dark_ratio": 0.954,
+        "bpm": 130,
+        "bpm_truth": 129
+      },
+      "reference_304s": {
+        "file": "world.search(you).mp4",
+        "size_bytes": 38001030,
+        "shots": 76,
+        "keyframes": 228,
+        "median_shot_s": 2.25,
+        "cuts_per_min": 14.96,
+        "palette_top": "#e6e3da 42.7%",
+        "ink": "#10141a 14.2%",
+        "tone_dark_mid_light": [
+          13.9,
+          3.3,
+          82.8
+        ],
+        "bpm": 139.5,
+        "bpm_stability_spread": 0,
+        "template": "knowledge/templates/template-world-search.json"
+      }
     },
     "known_limits": [
       "0.4.0 workbench is read-only: no drag reorder / duration trim / animatic playback / approve gate yet (0.4.1)",
       "reference analysis cannot copy content, cannot reverse-engineer motion 1:1, cannot do semantic shot understanding",
       "desktop automation cannot click the DSH host window (WCU_POLICY_DENIED / HOST_INPUT_DENIED); UI verified via HTTP endpoints only"
+    ]
+  },
+  "v050": {
+    "date": "2026-11-25",
+    "version": "0.5.0",
+    "theme": "工作台五条新需求：AI 全自动可局部改 / 把关点与 GOAL / 参考片导入 / 模板双向 / 四套主题",
+    "new_modules": [
+      "lib/goal.mjs",
+      "lib/template-apply.mjs",
+      "lib/template-save.mjs",
+      "knowledge/themes.json"
+    ],
+    "new_cli": {
+      "template:save": "node scripts/save-template.mjs <project dir> --id <id> [--install] [--force] [--json]"
+    },
+    "workbench": {
+      "stage": "0.5.0 interactive + acceptance + publish preflight",
+      "routes": 20,
+      "route_list": [
+        "GET /health",
+        "GET /projects",
+        "GET /project?name=",
+        "POST /project/save",
+        "POST /project/create",
+        "GET /cards",
+        "GET /templates",
+        "GET /asset?src=&id=",
+        "POST /animatic",
+        "POST /lint",
+        "POST /gate",
+        "GET /verify",
+        "GET /publish/preflight",
+        "POST /publish/record",
+        "GET /themes",
+        "POST /template/apply",
+        "POST /template/save",
+        "POST /reference/analyze",
+        "POST /reference/clear",
+        "GET+POST /goal"
+      ],
+      "themes": [
+        "dark 暮色（默认）",
+        "light 日光",
+        "ink 纸墨",
+        "neon 夜航"
+      ],
+      "goal": {
+        "modes": [
+          "co",
+          "auto"
+        ],
+        "hard_gates": [
+          "storyboard_approve",
+          "publish_approve"
+        ],
+        "interrupt": "safe point only (stage boundary or single-shot render done)"
+      },
+      "templates": {
+        "apply": "POST /template/apply (5 layers + slots)",
+        "save": "POST /template/save (strips all copy and local paths)",
+        "builtin": [
+          "template-world-search.json (reference-extracted)",
+          "template-ink-press-6shot.json (project-saved)"
+        ]
+      }
+    },
+    "measured": {
+      "self_test": "238/238",
+      "templates_count": 2,
+      "client_bundle_bytes": 124651,
+      "render_smoke": "ALL RENDER OK (12 components via stand-in React)"
+    },
+    "known_limits": [
+      "partial rerun (project / shot / field granularity) not wired yet — 0.6.0",
+      "no built-in upload: publish receipt is upload:manual by design",
+      "desktop automation still cannot click the DSH host window; UI verified via HTTP endpoints + offscreen render smoke"
     ]
   }
 }

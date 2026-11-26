@@ -4,11 +4,11 @@ CineForge is a DSH plugin that provides in-chat skills for turning a brief into 
 
 GitHub: [HJ-Create-World/dsh-cineforge](https://github.com/HJ-Create-World/dsh-cineforge) · Upstream: [video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft) (Apache-2.0)
 
-> This README describes what is actually implemented in **0.4.0** (workbench skeleton + reference-video analysis). It does not claim features planned for later phases. For the full Chinese README, see [README.md](README.md).
+> This README describes what is actually implemented in **0.5.0** (interactive workbench, GOAL mode, reference-video import, template save/apply, four themes). It does not claim features planned for later phases. For the full Chinese README, see [README.md](README.md).
 
-## Current status: runtime 0.4.0 (workbench skeleton · reference analysis · installed into the live DSH profile)
+## Current status: runtime 0.5.0 (interactive workbench · GOAL mode · templates · themes · installed into the live DSH profile)
 
-The design phase (0.1.0-design) was closed on 2026-11-24; 0.2.0 wired the runtime; 0.3.0/0.3.2 reworked the phase-1 demo film after two independent final reviews; **0.4.0 lands phase C (reference-video analysis promoted to `lib/`) and phase A (a read-only workbench panel)** — the plugin is no longer skills-only: it ships a `sidebar.panellist` row plus a paired `main` panel, and two zero-dependency CLIs (`analyze`, `extract-template`). Offline self-test is **129/129**. Next: 0.4.1 (interactive workbench), 0.4.2 (polish), 0.5.0 (the five new-requirement UI surfaces).
+The design phase (0.1.0-design) was closed on 2026-11-24; 0.2.0 wired the runtime; 0.3.0/0.3.2 reworked the phase-1 demo film after two independent final reviews; 0.4.0 landed phase C (reference-video analysis promoted to `lib/`) and phase A (a read-only workbench panel); 0.4.1 made it interactive (drag-reorder, duration trim, animatic, storyboard lint, approve gate); 0.4.2 added the frame-verification wall, the nine-item publish preflight with receipts, unsaved-change interception and read-only locking; **0.5.0 lands the five new-requirement surfaces** — editable brief with per-field provenance, per-shot editor with locks, GOAL mode with hard gates that never auto-open, reference-video import, template save/apply (both directions) and four themes. Offline self-test is **238/238**.
 
 | Capability | Implementation | Measured result |
 |---|---|---|
@@ -16,16 +16,16 @@ The design phase (0.1.0-design) was closed on 2026-11-24; 0.2.0 wired the runtim
 | Storyboard compilation | `scripts/compile-hf.mjs` compiles `cineforge/storyboard/v1` into a HyperFrames standalone composition (8 files + local GSAP / audio assets) | `hyperframes@0.9.88 check`: **0 error / 10 warning** (layout / motion / contrast / audio all 0/0; 7 structural lint warnings for phase-2 sub-compositions + 3 craft line_unread short-line readability); none blocking |
 | Frame verification | `scripts/verify-hf.mjs`: check-report parsing + up to 6 snapshots + contact sheet | 7 PNG frames all non-zero bytes, `ok=true` |
 | Film render | `npx --yes hyperframes@0.9.88 render` | `examples/demo-project.json` → `renders/cineforge-demo-01_2026-11-25_14-12-40.mp4`; ffprobe: H.264 / 1080×1920 / 30fps / **600 frames / 20.0s / 5.1MB** + **AAC 48kHz stereo**; `hyperframes audio --json`: **−19.6 LUFS / −1.3 dBTP / 0 clipping** (peak moment 17.745s lands on the s06 finale impact; measured, not listened) |
-| Offline self-test | `scripts/self-test.mjs` (zero CLI, zero network) | 97/97, including byte-identical sha256 across two compilations of 10 artifacts (deterministic render) |
+| Offline self-test | `scripts/self-test.mjs` (zero CLI, zero network) | **238/238**, including byte-identical sha256 across two compilations of 10 artifacts (deterministic render) and template-save content-leak checks |
 | Local DSH wiring | `scripts/install-local.mjs`: status / install / uninstall / verify, idempotent, reversible, dry-run by default | isolated profile install → idempotent → uninstall all pass; **installed into the live `desktop` profile and verified 32/32** |
 
-**GUI**: as of 0.4.0 the plugin **ships a graphical workbench**: a `sidebar.panellist` row ("影铸工作台") plus a paired `main` panel with three columns (A input sources / B storyboard / C library). This release is **read-only** — it lists projects, reads storyboards and browses the 124-card library; drag-reorder, duration trimming, animatic playback and the approve gate land in 0.4.1. **Store listing**: materials are prepared but **no PR has been submitted**; listing requires the repository to be ≥1 day old (after 2026-11-25 16:32 +08:00) and a manual PR to `awesome-dsh-plugin` by the user. A local private catalog can make the card visible immediately (see `docs/PUBLISH-商店上架指南.md`).
+**GUI**: as of 0.4.0 the plugin **ships a graphical workbench**: a `sidebar.panellist` row ("影铸工作台") plus a paired `main` panel with three columns (A input sources / B storyboard / C library). As of 0.5.0 the panel is fully interactive: drag-reorder shots, drag the right edge to change a shot duration, drag library cards onto the board, generate a low-res animatic, run storyboard lint, approve the gate, open the frame-verification wall, run the nine-item publish preflight, edit the brief, edit single shots, lock shots against AI overwrite, enable GOAL mode, import a reference video and save the current project as a reusable template. **Store listing**: materials are prepared but **no PR has been submitted**; listing requires the repository to be ≥1 day old (after 2026-11-25 16:32 +08:00) and a manual PR to `awesome-dsh-plugin` by the user. A local private catalog can make the card visible immediately (see `docs/PUBLISH-商店上架指南.md`).
 
 ## Quick start (runtime)
 
 ```bash
 # 0. Offline self-test (zero dependencies, seconds)
-npm test                         # scripts/self-test.mjs: 97/97
+npm test                         # scripts/self-test.mjs: 238/238
 
 # 1. Storyboard source: examples/demo-project.json (cineforge/storyboard/v1, 9:16, 6 shots, 20s)
 #    In real use the cineforge-director skill produces it in chat, behind the storyboard confirmation gate
@@ -82,7 +82,7 @@ The plugin's `cordis.patch.yml` is merged automatically by the host when loading
 | `lib/hf-template.html` / `.css` / `hf-shot.html` / `hf-timeline.js` | HyperFrames standalone composition templates (placeholder substitution) |
 | `scripts/compile-hf.mjs` | Storyboard JSON → HyperFrames project compiler |
 | `scripts/verify-hf.mjs` | Static-frame verification: check report + snapshots + contact sheet + JSON report |
-| `scripts/self-test.mjs` | 86 fully offline checks (including deterministic sha256 comparison) |
+| `scripts/self-test.mjs` | 238 fully offline checks (deterministic sha256 comparison, template-save leak checks) |
 | `scripts/install-local.mjs` | Local DSH wiring: idempotent install / status / verify / rollback |
 | `scripts/fetch-upstream.mjs` | Pull the pinned upstream snapshot via API SHA → codeload tar.gz |
 | `scripts/build-card-index.mjs` | Rebuild the taste index from upstream cards (idempotent) |
@@ -98,7 +98,7 @@ The plugin's `cordis.patch.yml` is merged automatically by the host when loading
 ## Specs
 
 - **Type**: DSH plugin (npm package + `cordis.patch.yml` + `ctx.skills.register`), not a standalone app.
-- **Version / status**: 0.4.0 / runtime + workbench (wired, installed into the live DSH profile, can run through to an audio-enabled MP4; workbench is a read-only skeleton in 0.4.0; film still NOT FOR PUBLISH).
+- **Version / status**: 0.5.0 / runtime + workbench (wired, installed into the live DSH profile, can run through to an audio-enabled MP4; the workbench is interactive and covers reference import, templates and GOAL mode; the demo film is still NOT FOR PUBLISH).
 - **Primary render backend**: HyperFrames (DSH built-in `dsh-hyperframes` 0.14.1; CLI pinned `hyperframes@0.9.88`), a runtime dependency, not vendored.
 - **Upstream**: [video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft), Apache-2.0, author Wei Yihao, pinned SHA `59f3e9b9e936ff2bce0e18446226d770a3f2f61f`. Only the 124 shot recipe cards, aesthetic rules and motion-token method were absorbed; runtime rendering goes through HyperFrames. No Remotion or MotionHarness code is bundled.
 - **Knowledge scale**: 124 shot recipe cards / 150 animation styles / 10 categories.
